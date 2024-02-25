@@ -2,12 +2,13 @@ import { Link } from 'expo-router';
 import { Button, YStack } from 'tamagui';
 
 import LineChart from '~/components/line-chart';
-import { Injection, Apidra } from '~/core/injection';
+import { getChartMarkers } from '~/core/chart';
+import { Apidra, Injection } from '~/core/injection';
 import { Meal } from '~/core/meal';
 import { getCombinedSugarPlot } from '~/core/sugarInfluence';
 import { getCurrentTick, incrementTick, tickToTime } from '~/core/time';
 
-export default function CombinedScreen() {
+export default function EditActivityScreen() {
   const now = getCurrentTick();
   const xs = new Float64Array(60).map((_, i) => incrementTick(now, i));
 
@@ -20,33 +21,7 @@ export default function CombinedScreen() {
 
   const activityPlot = getCombinedSugarPlot(xs, activities, 5);
 
-  const markPoint: echarts.MarkPointComponentOption = {
-    data: activities.map((activity, i) => {
-      if (activity instanceof Meal) {
-        return {
-          name: 'Meal',
-          coord: [tickToTime(activity.startTime), 2],
-          value: `${activity.carbsCount}g`,
-          itemStyle: {
-            color: 'yellow',
-          },
-          symbol: 'square',
-          symbolSize: 35,
-        };
-      } else {
-        return {
-          name: 'Injection',
-          coord: [tickToTime(activity.startTime), 10],
-          value: `${activity.insulinAmount}U`,
-          itemStyle: {
-            color: 'blue',
-          },
-          symbol: 'circle',
-          symbolSize: 35,
-        };
-      }
-    }),
-  };
+  const markPoint = getChartMarkers(activities);
 
   return (
     <YStack alignItems="center">
@@ -56,9 +31,6 @@ export default function CombinedScreen() {
         markPoint={markPoint}
         title="Sugar Influence"
       />
-      <Link href="/editActivity" asChild>
-        <Button maxWidth="250px">New Activity</Button>
-      </Link>
     </YStack>
   );
 }
