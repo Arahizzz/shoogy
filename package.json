@@ -2,14 +2,16 @@
   "name": "shoogy-expo",
   "version": "1.0.0",
   "scripts": {
-    "android": "expo start --android",
+    "android": "expo run:android --port 5173",
     "format": "eslint \"**/*.{js,jsx,ts,tsx}\" --fix && prettier \"**/*.{js,jsx,ts,tsx,json}\" --write",
-    "ios": "expo start --ios",
+    "ios": "expo run:ios --port 5173",
     "start": "expo start --port 5173",
-    "web": "expo start --web"
+    "web": "expo start --web --port 5173"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.0",
+    "@morrowdigital/watermelondb-expo-plugin": "^2.3.1",
+    "@nozbe/watermelondb": "^0.27.1",
     "@react-navigation/native": "^6.1.7",
     "@shopify/react-native-skia": "0.1.221",
     "@tamagui/font-inter": "1.74.8",
@@ -20,6 +22,7 @@
     "algomatic": "^3.2.1",
     "echarts": "^5.5.0",
     "expo": "~50.0.5",
+    "expo-build-properties": "~0.11.1",
     "expo-constants": "~15.4.5",
     "expo-font": "~11.10.2",
     "expo-linking": "~6.2.2",
