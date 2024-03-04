@@ -6,6 +6,7 @@ import { Injection, Apidra } from '~/core/injection';
 import { Meal } from '~/core/meal';
 import { getCombinedSugarPlot } from '~/core/sugarInfluence';
 import { getCurrentTick, incrementTick, tickToTime } from '~/core/time';
+import { of } from 'rxjs';
 
 export default function CombinedScreen() {
   const now = getCurrentTick();
@@ -50,12 +51,7 @@ export default function CombinedScreen() {
 
   return (
     <YStack alignItems="center">
-      <LineChart
-        xs={activityPlot.xs}
-        ys={activityPlot.ys}
-        markPoint={markPoint}
-        title="Sugar Influence"
-      />
+      <LineChart data$={of({ xs, ys: activityPlot.ys, markPoint })} title="Sugar Influence" />
       <Link href="/editActivity" asChild>
         <Button maxWidth="250px">New Activity</Button>
       </Link>

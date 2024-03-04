@@ -5,23 +5,35 @@ import { GridComponent, MarkPointComponent } from 'echarts/components';
 import * as echarts from 'echarts/core';
 import React, { useRef, useEffect } from 'react';
 import { useWindowDimensions } from 'react-native';
+import { Observable } from 'rxjs';
+import { useSubscription } from 'observable-hooks';
 
 echarts.use([SVGRenderer, LineChart, GridComponent, ScatterChart, MarkPointComponent]);
 
-export default function EchartComponent(options: EChartsOption) {
-  const { width } = useWindowDimensions();
+type Props = {
+  options$: Observable<EChartsOption>;
+};
+
+export default function EchartComponent(props: Props) {
   const skiaRef = useRef<any>(null);
-  let chart: echarts.ECharts | undefined;
+  const chart = useRef<echarts.ECharts | undefined>();
+  const { width } = useWindowDimensions();
   useEffect(() => {
-    if (!chart) {
-      chart = echarts.init(skiaRef.current, 'light', {
+    if (!chart.current) {
+      chart.current = echarts.init(skiaRef.current, 'light', {
         renderer: 'svg',
+        width,
+        height: 300,
       });
     }
-    chart.setOption(options);
-    chart.resize({ width, height: 300 });
-    return () => chart?.dispose();
-  }, [skiaRef.current, options, width]);
+    return () => chart.current?.dispose();
+  }, []);
+  useEffect(() => {
+    chart.current?.resize({ width, height: 300 });
+  }, [width]);
+  useSubscription(props.options$, (options) => {
+    chart.current?.setOption(options);
+  });
 
   return <SkiaChart ref={skiaRef} />;
 }

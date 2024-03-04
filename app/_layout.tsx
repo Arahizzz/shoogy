@@ -28,17 +28,17 @@ export default function RootLayout() {
 
   return (
     <TamaguiProvider config={config}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-        <Stack.Screen
-          name="editActivity"
-          options={{
-            presentation: 'card',
-            title: 'New Activity',
-          }}
-        />
-      </Stack>
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+          <Stack.Screen
+            name="editActivity"
+            options={{
+              presentation: 'card',
+              title: 'New Activity',
+            }}
+          />
+        </Stack>
     </TamaguiProvider>
   );
 }
