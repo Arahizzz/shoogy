@@ -24,6 +24,7 @@ import { getCurrentTick, incrementTick } from '~/core/time';
 import NumericInput from '~/components/numeric-input';
 import { ChevronDown, Delete } from '@tamagui/lucide-icons';
 import CombinedChart, { Activity } from '~/components/combined-chart';
+import TimeInput from '~/components/time-input';
 
 type ActivityState = Activity & { id: number };
 
@@ -185,10 +186,9 @@ function ActivityTimeEdit({ activity$ }: { activity$: BehaviorSubject<ActivitySt
   const activity = useObservableState(activity$);
 
   return (
-    <NumericInput
+    <TimeInput
       id={'time'}
       initialValue={of(activity.startTime)}
-      step={5}
       $changes={{
         next: (startTime: number) => {
           activity$.next({ ...activity, startTime });
@@ -229,8 +229,6 @@ function ActivityTypeSelector({ activity$ }: { activity$: BehaviorSubject<Activi
         startTime: getCurrentTick(),
       }))
       .exhaustive();
-
-    console.log('newActivity', newActivity);
 
     activity$.next(newActivity);
   };

@@ -1,14 +1,4 @@
-import {
-  filter,
-  first,
-  map,
-  NextObserver,
-  Observable,
-  of,
-  PartialObserver,
-  share,
-  switchAll,
-} from 'rxjs';
+import { filter, map, merge, Observable, PartialObserver, share } from 'rxjs';
 import { Mask, useMaskedInputProps } from 'react-native-mask-input';
 import { useObservableState } from 'observable-hooks/src';
 import { useObservable, useSubscription } from 'observable-hooks';
@@ -16,30 +6,28 @@ import { ValidationState } from '~/components/numeric-input';
 
 type ObservableInputProps<T, TId extends string> = {
   id: TId;
-  initialValue: Observable<number>;
+  value$: Observable<T>;
   $changes?: PartialObserver<T>;
   $validation?: PartialObserver<ValidationState>;
   mask?: Mask;
   validate: (value: string) => T | Record<TId, string>;
   display: (value: T) => string;
 };
+
+export const validationError = <TId extends string>(id: TId, message: string) => ({
+  [id]: message,
+});
+
 export function useObservableInput<T, TId extends string>(props: ObservableInputProps<T, TId>) {
   const [state, setState] = useObservableState<string>(
-    (input$) =>
-      of(
-        props.initialValue.pipe(
-          first(),
-          map((n) => n.toString())
-        ),
-        input$
-      ).pipe(switchAll()),
+    (input$) => merge(props.value$.pipe(map((n) => props.display(n))), input$),
     ''
   );
   const maskedInputProps = useMaskedInputProps({
     value: state,
     onChangeText: setState,
     mask: props.mask,
-    maskAutoComplete: true,
+    maskAutoComplete: false,
   });
   const validationState$ = useObservable(
     (inputs$) =>
@@ -66,8 +54,5 @@ export function useObservableInput<T, TId extends string>(props: ObservableInput
     setState,
     changes$,
     errors$,
-    setValue: (value: T) => {
-      setState(props.display(value));
-    },
   };
 }

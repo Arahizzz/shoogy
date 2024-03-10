@@ -1,8 +1,8 @@
 import { Button, Input, styled, Text, XGroup } from 'tamagui';
-import { Observable, PartialObserver } from 'rxjs';
+import { first, merge, Observable, PartialObserver } from 'rxjs';
 import { useObservableState } from 'observable-hooks/src';
-import { Mask } from 'react-native-mask-input';
-import { useObservableInput } from '~/components/observable-input';
+import { useObservableInput, validationError } from '~/components/observable-input';
+import { useObservableCallback } from 'observable-hooks';
 
 export type ValidationState = Record<string, string>;
 
@@ -12,7 +12,6 @@ type Props = {
   initialValue: Observable<number>;
   $changes?: PartialObserver<number>;
   $validation?: PartialObserver<ValidationState>;
-  mask?: Mask;
   min?: number;
   max?: number;
   step: number;
@@ -20,38 +19,35 @@ type Props = {
 
 export default function NumericInput(props: Props) {
   const validate = (value?: string) => {
-    if (!value)
-      return {
-        [props.id]: 'Required',
-      };
+    if (!value) return validationError(props.id, 'Required');
     const number = parseFloat(value);
-    if (isNaN(number))
-      return {
-        [props.id]: 'Not a number',
-      };
-    if (props.min && number < props.min) return { [props.id]: 'Too low' };
-    if (props.max && number > props.max) return { [props.id]: 'Too high' };
+    if (isNaN(number)) return validationError(props.id, 'Invalid number');
+    if (props.min && number < props.min) return validationError(props.id, 'Too low');
+    if (props.max && number > props.max) return validationError(props.id, 'Too high');
     return number;
   };
 
-  const { inputProps, changes$, setValue } = useObservableInput({
+  const [setValue, value$] = useObservableCallback<number>((input$) =>
+    merge(input$, props.initialValue.pipe(first()))
+  );
+
+  const { inputProps, changes$ } = useObservableInput({
     id: props.id,
-    initialValue: props.initialValue,
+    value$,
     $changes: props.$changes,
     $validation: props.$validation,
-    mask: props.mask,
     validate,
     display: (value) => value.toFixed(1).toString(),
   });
 
-  const lastVal = useObservableState(changes$, 0);
+  const currValue = useObservableState(changes$, 0);
   const increment = () => {
-    if (props.max && lastVal + props.step > props.max) return;
-    setValue(lastVal + props.step);
+    if (props.max && currValue + props.step > props.max) return;
+    setValue(currValue + props.step);
   };
   const decrement = () => {
-    if (props.min && lastVal - props.step < props.min) return;
-    setValue(lastVal - props.step);
+    if (props.min && currValue - props.step < props.min) return;
+    setValue(currValue - props.step);
   };
 
   return (
