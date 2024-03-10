@@ -188,7 +188,7 @@ function ActivityTimeEdit({ activity$ }: { activity$: BehaviorSubject<ActivitySt
     <NumericInput
       id={'time'}
       initialValue={of(activity.startTime)}
-      step={1}
+      step={5}
       $changes={{
         next: (startTime: number) => {
           activity$.next({ ...activity, startTime });

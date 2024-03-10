@@ -41,6 +41,7 @@ export default function ScatterChart({ title, data$ }: LineChartProps) {
               dimensions: ['time', 'value'],
               type: 'scatter',
               markPoint,
+              symbolSize: 7,
             },
           ],
         } satisfies EChartsOption;

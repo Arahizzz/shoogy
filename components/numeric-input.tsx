@@ -1,105 +1,63 @@
-import { Button, Input, styled, Text, XGroup, XStack } from 'tamagui';
-import { StyleSheet } from 'react-native';
-import {
-  combineLatestWith,
-  filter,
-  first,
-  map,
-  NextObserver,
-  Observable,
-  of,
-  share,
-  switchAll,
-} from 'rxjs';
-import { useObservable, useSubscription } from 'observable-hooks';
+import { Button, Input, styled, Text, XGroup } from 'tamagui';
+import { Observable, PartialObserver } from 'rxjs';
 import { useObservableState } from 'observable-hooks/src';
-import { Mask, useMaskedInputProps } from 'react-native-mask-input';
+import { Mask } from 'react-native-mask-input';
+import { useObservableInput } from '~/components/observable-input';
 
-export type ValidationState = Record<string, Record<string, string>>;
+export type ValidationState = Record<string, string>;
 
 type Props = {
   id: string;
   suffix?: string;
   initialValue: Observable<number>;
-  $changes?: NextObserver<number>;
-  $validation?: NextObserver<ValidationState>;
+  $changes?: PartialObserver<number>;
+  $validation?: PartialObserver<ValidationState>;
   mask?: Mask;
   min?: number;
   max?: number;
   step: number;
 };
 
-const isNumber = (value: any): value is number => {
-  return typeof value === 'number';
-};
-
-const isString = (value: any): value is string => {
-  return typeof value === 'string';
-};
-
 export default function NumericInput(props: Props) {
   const validate = (value?: string) => {
-    if (!value) return 'Required';
+    if (!value)
+      return {
+        [props.id]: 'Required',
+      };
     const number = parseFloat(value);
-    if (isNaN(number)) return 'Not a number';
-    if (props.min && number < props.min) return 'Too low';
-    if (props.max && number > props.max) return 'Too high';
+    if (isNaN(number))
+      return {
+        [props.id]: 'Not a number',
+      };
+    if (props.min && number < props.min) return { [props.id]: 'Too low' };
+    if (props.max && number > props.max) return { [props.id]: 'Too high' };
     return number;
   };
 
-  const [state, setState] = useObservableState<string>(
-    (input$) =>
-      of(
-        props.initialValue.pipe(
-          first(),
-          map((n) => n.toString())
-        ),
-        input$
-      ).pipe(switchAll()),
-    ''
-  );
-  const maskedInputProps = useMaskedInputProps({
-    value: state,
-    onChangeText: setState,
+  const { inputProps, changes$, setValue } = useObservableInput({
+    id: props.id,
+    initialValue: props.initialValue,
+    $changes: props.$changes,
+    $validation: props.$validation,
     mask: props.mask,
-    maskAutoComplete: true,
+    validate,
+    display: (value) => value.toFixed(1).toString(),
   });
-  const validationState$ = useObservable(
-    (inputs$) =>
-      inputs$.pipe(
-        map(([value]) => validate(value)),
-        share()
-      ),
-    [state]
-  );
-  const changes$ = useObservable(() => validationState$.pipe(filter(isNumber)));
-  const errors$ = useObservable(
-    (inputs$) =>
-      validationState$.pipe(
-        filter(isString),
-        combineLatestWith(inputs$),
-        map(([value, [id]]) => ({ [id]: { value } }))
-      ),
-    [props.id]
-  );
-
-  useSubscription(changes$, props.$changes);
-  useSubscription(errors$, props.$validation);
 
   const lastVal = useObservableState(changes$, 0);
   const increment = () => {
     if (props.max && lastVal + props.step > props.max) return;
-    setState((lastVal + props.step).toFixed(1).toString());
+    setValue(lastVal + props.step);
   };
   const decrement = () => {
     if (props.min && lastVal - props.step < props.min) return;
-    setState((lastVal - props.step).toFixed(1).toString());
+    setValue(lastVal - props.step);
   };
 
   return (
     <XGroup marginHorizontal={5}>
       <SideButton onPress={decrement}>-</SideButton>
-      <SmallNumericInput keyboardType={'numeric'} {...maskedInputProps} />
+      <SmallNumericInput keyboardType={'numeric'} {...inputProps} />
       <Suffix>{props.suffix}</Suffix>
       <SideButton onPress={increment}>+</SideButton>
     </XGroup>
