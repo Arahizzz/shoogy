@@ -11,18 +11,26 @@ export type InsulinActivityLevel = {
   value: number;
 };
 
+export type InjectionParams = {
+  activity: InsulinActivityLevel[];
+  insulinAmount: number;
+  startTime: number;
+};
+
 export class Injection implements Activity, SugarInfluence {
-  constructor(
-    public activity: InsulinActivityLevel[],
-    public insulinAmount: number,
-    public startTime: number
-  ) {
+  public readonly activity: InsulinActivityLevel[];
+  public readonly insulinAmount: number;
+  public readonly startTime: number;
+  public readonly duration;
+  private readonly activityCurve;
+
+  constructor({ activity, insulinAmount, startTime }: InjectionParams) {
+    this.activity = activity;
+    this.insulinAmount = insulinAmount;
+    this.startTime = startTime;
     this.duration = activity[activity.length - 1].time;
     this.activityCurve = this.initActivityCurve();
   }
-
-  public readonly duration;
-  private readonly activityCurve;
 
   getActivityLevel(time: number): number {
     return this.activityCurve(time);

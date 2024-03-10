@@ -1,5 +1,5 @@
 import React from 'react';
-import { H5, YStack } from 'tamagui';
+import { H5, View, YStack } from 'tamagui';
 
 import EchartComponent from './echart';
 
@@ -16,7 +16,7 @@ type LineChartProps = {
     markPoint?: MarkPointComponentOption;
   }>;
 };
-export default function LineChart({ title, data$ }: LineChartProps) {
+export default function ScatterChart({ title, data$ }: LineChartProps) {
   const options$ = useObservable(() =>
     data$.pipe(
       map(({ xs, ys, markPoint }) => {
@@ -32,6 +32,8 @@ export default function LineChart({ title, data$ }: LineChartProps) {
           },
           yAxis: {
             min: 0,
+            max: 15,
+            // max: Math.max(10, Math.round(Math.max(...ys) + 3)),
           },
           series: [
             {
@@ -49,7 +51,9 @@ export default function LineChart({ title, data$ }: LineChartProps) {
   return (
     <YStack alignItems="center">
       <H5 color="black">{title}</H5>
-      <EchartComponent options$={options$} />
+      <View height={250}>
+        <EchartComponent options$={options$} />
+      </View>
     </YStack>
   );
 }

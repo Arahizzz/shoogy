@@ -6,19 +6,27 @@ import type { Axis } from '~/core/chart';
 import { CarbSensitivity } from '~/core/settings';
 import type { SugarInfluence } from '~/core/sugarInfluence';
 
+export type MealParams = {
+  carbsCount: number;
+  carbsAbsorptionRatePerHr: number;
+  startTime: number;
+};
+
 export class Meal implements Activity, SugarInfluence {
-  constructor(
-    public carbsCount: number,
-    public carbsAbsorptionRatePerHr: number,
-    public startTime: number
-  ) {
+  public readonly duration;
+  private readonly activityCurve;
+  public carbsCount: number;
+  public carbsAbsorptionRatePerHr: number;
+  public startTime: number;
+
+  constructor({ carbsCount, carbsAbsorptionRatePerHr, startTime }: MealParams) {
+    this.carbsCount = carbsCount;
+    this.carbsAbsorptionRatePerHr = carbsAbsorptionRatePerHr;
+    this.startTime = startTime;
     const carbsAbsorptionRatePerMin = carbsAbsorptionRatePerHr / 60;
     this.duration = carbsCount / carbsAbsorptionRatePerMin;
     this.activityCurve = this.initActivityCurve();
   }
-
-  public readonly duration;
-  private readonly activityCurve;
 
   private initActivityCurve() {
     const easingInterval = 15;

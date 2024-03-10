@@ -1,6 +1,6 @@
-const tickResolution = 5;
+export const tickResolution = 5;
 const roundTo = (roundTo: number) => (x: number) => Math.round(x / roundTo) * roundTo;
-const roundToTickResolution = roundTo(tickResolution);
+export const roundToTickResolution = roundTo(tickResolution);
 
 export const getCurrentTick = () => roundToTickResolution(Date.now() / 60_000);
 export const tickToTime = (tick: number) => tick * 60_000;

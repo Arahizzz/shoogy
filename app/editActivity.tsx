@@ -1,6 +1,5 @@
-import { useObservable, useSubscription } from 'observable-hooks';
 import { useObservableState } from 'observable-hooks/src';
-import { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import {
   BehaviorSubject,
   combineLatest,
@@ -11,84 +10,54 @@ import {
   Observable,
   of,
   switchMap,
-  tap,
 } from 'rxjs';
-import { Button, XStack, YStack } from 'tamagui';
+import { Adapt, Button, ScrollView, Select, Sheet, XGroup, XStack, YStack } from 'tamagui';
 import { match, P } from 'ts-pattern';
 
-import LineChart from '~/components/line-chart';
+import ScatterChart from '~/components/scatter-chart';
 import { getChartMarkers } from '~/core/chart';
-import { Apidra, Injection } from '~/core/injection';
-import { Meal } from '~/core/meal';
+import { Apidra, Injection, InjectionParams } from '~/core/injection';
+import { Meal, MealParams } from '~/core/meal';
 import { linkNext } from '~/core/rxjs';
 import { getCombinedSugarPlot } from '~/core/sugarInfluence';
 import { getCurrentTick, incrementTick } from '~/core/time';
 import NumericInput from '~/components/numeric-input';
+import { ChevronDown, Delete } from '@tamagui/lucide-icons';
+import CombinedChart, { Activity } from '~/components/combined-chart';
 
-type Activity =
-  | {
-      id: string;
-      type: 'meal';
-      options: Meal;
-    }
-  | {
-      id: string;
-      type: 'injection';
-      options: Injection;
-    };
-
-const mapActivity = (activity: Meal | Injection): Activity =>
-  match(activity)
-    .returnType<Activity>()
-    .with(P.instanceOf(Meal), (meal) => ({
-      id: crypto.randomUUID(),
-      type: 'meal',
-      options: meal as Meal,
-    }))
-    .with(P.instanceOf(Injection), (injection) => ({
-      id: crypto.randomUUID(),
-      type: 'injection',
-      options: injection,
-    }))
-    .exhaustive();
+type ActivityState = Activity & { id: number };
 
 class ActivityStore {
-  private activities = new BehaviorSubject<BehaviorSubject<Activity>[]>([]);
-  public startSugar = new BehaviorSubject(0);
-  public activities$ = this.activities.pipe(switchMap((activities) => combineLatest(activities)));
-  public plotInfo$ = this.activities$.pipe(
-    combineLatestWith(this.startSugar),
-    debounceTime(300),
-    map(([activities, startSugar]) => {
-      const xs = new Float64Array(60).map((_, i) => incrementTick(tick, i));
-      const influences = activities.map((activity) => activity.options);
-      const activityPlot = getCombinedSugarPlot(xs, influences, startSugar);
-      const markPoint = getChartMarkers(influences);
+  private counter = 0;
+  public activitiesState$ = new BehaviorSubject<BehaviorSubject<ActivityState>[]>([]);
+  public startSugar$ = new BehaviorSubject(0);
 
-      return { xs, ys: activityPlot.ys, markPoint };
-    })
-  );
-
-  init(activities: Observable<(Meal | Injection)[]>, sugar: Observable<number>) {
+  init(activities: Observable<ActivityState[]>, sugar: Observable<number>) {
     activities
       .pipe(
         first(),
-        map((activities) =>
-          activities.map((activity) => new BehaviorSubject(mapActivity(activity)))
-        )
+        map((activities) => activities.map((activity) => new BehaviorSubject(activity)))
       )
-      .subscribe(linkNext(this.activities));
-    sugar.pipe(first()).subscribe(linkNext(this.startSugar));
+      .subscribe(linkNext(this.activitiesState$));
+    sugar.pipe(first()).subscribe(linkNext(this.startSugar$));
   }
   dispose() {
-    this.activities.next([]);
-    this.startSugar.next(0);
+    this.activitiesState$.next([]);
+    this.startSugar$.next(0);
+    this.counter = 0;
   }
-  newActivity(activity: Meal | Injection) {
-    this.activities.next([...this.activities.value, new BehaviorSubject(mapActivity(activity))]);
+
+  newActivity(activityProps: Activity) {
+    const activity$ = new BehaviorSubject<ActivityState>({
+      id: --this.counter,
+      ...activityProps,
+    });
+    this.activitiesState$.next([...this.activitiesState$.value, activity$]);
   }
-  removeActivity(id: string) {
-    this.activities.next(this.activities.value.filter((activity$) => activity$.value.id !== id));
+  removeActivity(id: number) {
+    this.activitiesState$.next(
+      this.activitiesState$.value.filter((activity$) => activity$.value.id !== id)
+    );
   }
 }
 
@@ -96,10 +65,34 @@ const store = new ActivityStore();
 
 // Data for the chart
 const tick = getCurrentTick();
-const pasta = new Meal(100, 40, incrementTick(tick, 3));
-const injection1 = new Injection(Apidra, 4, tick);
-const injection2 = new Injection(Apidra, 5, incrementTick(tick, 7));
-const injection3 = new Injection(Apidra, 1, incrementTick(tick, 15));
+const pasta: ActivityState = {
+  id: 0,
+  type: 'meal',
+  carbsCount: 100,
+  carbsAbsorptionRatePerHr: 40,
+  startTime: incrementTick(tick, 3),
+};
+const injection1: ActivityState = {
+  id: 1,
+  type: 'injection',
+  activity: Apidra,
+  insulinAmount: 4,
+  startTime: tick,
+};
+const injection2: ActivityState = {
+  id: 2,
+  type: 'injection',
+  activity: Apidra,
+  insulinAmount: 5,
+  startTime: incrementTick(tick, 7),
+};
+const injection3: ActivityState = {
+  id: 3,
+  type: 'injection',
+  activity: Apidra,
+  insulinAmount: 1,
+  startTime: incrementTick(tick, 15),
+};
 
 export default function EditActivityScreen() {
   useEffect(() => {
@@ -108,17 +101,27 @@ export default function EditActivityScreen() {
   }, []);
 
   return (
-    <YStack alignItems="center">
-      <ActivityChart />
-      <StartSugarEdit />
-      <Button onPress={() => store.newActivity(new Injection(Apidra, 3, getCurrentTick()))}>
-        Add Injection
-      </Button>
-    </YStack>
+    <ScrollView stickyHeaderIndices={[0]}>
+      <YStack backgroundColor={'whitesmoke'} alignItems="center">
+        <CombinedChart activities$={store.activitiesState$} startSugar$={store.startSugar$} />
+        <XStack>
+          <StartSugarEdit />
+          <Button
+            onPress={() =>
+              store.newActivity({
+                type: 'injection',
+                activity: Apidra,
+                insulinAmount: 3,
+                startTime: getCurrentTick(),
+              })
+            }>
+            Add Activity
+          </Button>
+        </XStack>
+      </YStack>
+      <ActivitiesEdit />
+    </ScrollView>
   );
-}
-function ActivityChart() {
-  return <LineChart data$={store.plotInfo$} title="Sugar Influence" />;
 }
 
 function StartSugarEdit() {
@@ -128,7 +131,204 @@ function StartSugarEdit() {
       initialValue={of(5)}
       min={0}
       step={0.1}
-      $changes={linkNext(store.startSugar)}
+      $changes={linkNext(store.startSugar$)}
     />
+  );
+}
+
+function ActivitiesEdit() {
+  const activities = useObservableState(store.activitiesState$);
+
+  return (
+    <YStack alignItems={'flex-start'}>
+      {activities.map((activity$) => (
+        <ActivityEdit key={activity$.value.id.toString()} activity$={activity$} />
+      ))}
+    </YStack>
+  );
+}
+
+function ActivityEdit({ activity$ }: { activity$: BehaviorSubject<ActivityState> }) {
+  const editor = useObservableState(() =>
+    activity$.pipe(
+      map((activity) => {
+        return match(activity.type)
+          .returnType<React.JSX.Element>()
+          .with('meal', () => (
+            <MealEdit
+              key={activity.id}
+              meal$={activity$ as unknown as BehaviorSubject<MealParams>}
+            />
+          ))
+          .with('injection', () => (
+            <InsulinEdit
+              key={activity.id}
+              insulin$={activity$ as unknown as BehaviorSubject<InjectionParams>}
+            />
+          ))
+          .exhaustive();
+      })
+    )
+  );
+
+  return (
+    <XGroup marginVertical={5}>
+      <ActivityTimeEdit activity$={activity$} />
+      <ActivityTypeSelector activity$={activity$} />
+      {editor}
+      <DeleteButton activity$={activity$} />
+    </XGroup>
+  );
+}
+
+function ActivityTimeEdit({ activity$ }: { activity$: BehaviorSubject<ActivityState> }) {
+  const activity = useObservableState(activity$);
+
+  return (
+    <NumericInput
+      id={'time'}
+      initialValue={of(activity.startTime)}
+      step={1}
+      $changes={{
+        next: (startTime: number) => {
+          activity$.next({ ...activity, startTime });
+        },
+      }}
+    />
+  );
+}
+
+function DeleteButton({ activity$ }: { activity$: BehaviorSubject<ActivityState> }) {
+  const activity = useObservableState(activity$);
+  return (
+    <Button
+      backgroundColor={'red'}
+      onPress={() => store.removeActivity(activity.id)}
+      icon={<Delete color={'white'} />}></Button>
+  );
+}
+
+function ActivityTypeSelector({ activity$ }: { activity$: BehaviorSubject<ActivityState> }) {
+  const activity = useObservableState(activity$);
+
+  const changeType = (type: 'meal' | 'injection') => {
+    const newActivity = match(type)
+      .returnType<ActivityState>()
+      .with('meal', () => ({
+        id: activity.id,
+        type: 'meal',
+        carbsCount: 100,
+        carbsAbsorptionRatePerHr: 40,
+        startTime: getCurrentTick(),
+      }))
+      .with('injection', () => ({
+        id: activity.id,
+        type: 'injection',
+        activity: Apidra,
+        insulinAmount: 5,
+        startTime: getCurrentTick(),
+      }))
+      .exhaustive();
+
+    console.log('newActivity', newActivity);
+
+    activity$.next(newActivity);
+  };
+
+  return (
+    <Select value={activity.type} onValueChange={changeType}>
+      <Select.Trigger
+        height={40}
+        width={85}
+        fontSize={15}
+        paddingVertical={0}
+        backgroundColor={'whitesmoke'}
+        iconAfter={<ChevronDown color={'black'} />}>
+        <Select.Value placeholder="Something" />
+      </Select.Trigger>
+      <Adapt platform="touch">
+        <Sheet
+          native
+          modal
+          dismissOnSnapToBottom
+          animationConfig={{
+            type: 'spring',
+            damping: 20,
+            mass: 1.2,
+            stiffness: 250,
+          }}>
+          <Sheet.Frame>
+            <Sheet.ScrollView>
+              <Adapt.Contents />
+            </Sheet.ScrollView>
+          </Sheet.Frame>
+          <Sheet.Overlay animation="lazy" enterStyle={{ opacity: 0 }} exitStyle={{ opacity: 0 }} />
+        </Sheet>
+      </Adapt>
+
+      <Select.Content>
+        <Select.Viewport>
+          <Select.Item value={'meal'} index={0}>
+            <Select.ItemText>🥞</Select.ItemText>
+          </Select.Item>
+          <Select.Item value={'injection'} index={1}>
+            <Select.ItemText>💉</Select.ItemText>
+          </Select.Item>
+        </Select.Viewport>
+      </Select.Content>
+    </Select>
+  );
+}
+
+function MealEdit({ meal$ }: { meal$: BehaviorSubject<MealParams> }) {
+  return (
+    <XGroup>
+      <NumericInput
+        id={'meal-carbs'}
+        suffix={'g'}
+        initialValue={meal$.pipe(map((meal) => meal.carbsCount))}
+        min={0}
+        step={1}
+        $changes={{
+          next: (carbsCount: number) => {
+            const prevMeal = meal$.value;
+            meal$.next({ ...prevMeal, carbsCount });
+          },
+        }}
+      />
+      <NumericInput
+        id={'meal-carbs-absorption-rate'}
+        suffix={'g/h'}
+        initialValue={meal$.pipe(map((meal) => meal.carbsAbsorptionRatePerHr))}
+        min={0}
+        step={1}
+        $changes={{
+          next: (carbsAbsorptionRatePerHr: number) => {
+            const prevMeal = meal$.value;
+            meal$.next({ ...prevMeal, carbsAbsorptionRatePerHr });
+          },
+        }}
+      />
+    </XGroup>
+  );
+}
+
+function InsulinEdit({ insulin$ }: { insulin$: BehaviorSubject<InjectionParams> }) {
+  return (
+    <XGroup>
+      <NumericInput
+        id={'insulin-amount'}
+        suffix={'U'}
+        initialValue={insulin$.pipe(map((injection) => injection.insulinAmount))}
+        min={0}
+        step={1}
+        $changes={{
+          next: (insulinAmount: number) => {
+            const prevInjection = insulin$.value;
+            insulin$.next({ ...prevInjection, insulinAmount });
+          },
+        }}
+      />
+    </XGroup>
   );
 }

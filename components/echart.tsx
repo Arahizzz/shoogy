@@ -23,13 +23,13 @@ export default function EchartComponent(props: Props) {
       chart.current = echarts.init(skiaRef.current, 'light', {
         renderer: 'svg',
         width,
-        height: 300,
+        height: 250,
       });
     }
     return () => chart.current?.dispose();
   }, []);
   useEffect(() => {
-    chart.current?.resize({ width, height: 300 });
+    chart.current?.resize({ width, height: 250 });
   }, [width]);
   useSubscription(props.options$, (options) => {
     chart.current?.setOption(options);

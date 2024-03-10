@@ -1,7 +1,9 @@
-import { Button, Input, XStack } from 'tamagui';
+import { Button, Input, styled, Text, XGroup, XStack } from 'tamagui';
+import { StyleSheet } from 'react-native';
 import {
   combineLatestWith,
   filter,
+  first,
   map,
   NextObserver,
   Observable,
@@ -11,14 +13,17 @@ import {
 } from 'rxjs';
 import { useObservable, useSubscription } from 'observable-hooks';
 import { useObservableState } from 'observable-hooks/src';
+import { Mask, useMaskedInputProps } from 'react-native-mask-input';
 
 export type ValidationState = Record<string, Record<string, string>>;
 
 type Props = {
   id: string;
+  suffix?: string;
   initialValue: Observable<number>;
   $changes?: NextObserver<number>;
   $validation?: NextObserver<ValidationState>;
+  mask?: Mask;
   min?: number;
   max?: number;
   step: number;
@@ -43,9 +48,22 @@ export default function NumericInput(props: Props) {
   };
 
   const [state, setState] = useObservableState<string>(
-    (input$) => of(props.initialValue.pipe(map((n) => n.toString())), input$).pipe(switchAll()),
+    (input$) =>
+      of(
+        props.initialValue.pipe(
+          first(),
+          map((n) => n.toString())
+        ),
+        input$
+      ).pipe(switchAll()),
     ''
   );
+  const maskedInputProps = useMaskedInputProps({
+    value: state,
+    onChangeText: setState,
+    mask: props.mask,
+    maskAutoComplete: true,
+  });
   const validationState$ = useObservable(
     (inputs$) =>
       inputs$.pipe(
@@ -79,15 +97,43 @@ export default function NumericInput(props: Props) {
   };
 
   return (
-    <XStack>
-      <Button onPress={decrement}>-</Button>
-      <Input
-        width={'60px'}
-        keyboardType={'numeric'}
-        value={state}
-        onChangeText={(t) => setState(t)}
-      />
-      <Button onPress={increment}>+</Button>
-    </XStack>
+    <XGroup marginHorizontal={5}>
+      <SideButton onPress={decrement}>-</SideButton>
+      <SmallNumericInput keyboardType={'numeric'} {...maskedInputProps} />
+      <Suffix>{props.suffix}</Suffix>
+      <SideButton onPress={increment}>+</SideButton>
+    </XGroup>
   );
 }
+
+export const SideButton = styled(Button, {
+  backgroundColor: 'salmon',
+  paddingHorizontal: 10,
+  height: 40,
+});
+
+export const SmallNumericInput = styled(Input, {
+  backgroundColor: 'whitesmoke',
+  color: 'black',
+  borderColor: 'salmon',
+  borderLeftWidth: 0,
+  borderRightWidth: 0,
+  minWidth: '60px',
+  paddingHorizontal: 10,
+  height: 40,
+});
+
+export const Suffix = styled(Text, {
+  backgroundColor: 'whitesmoke',
+  color: 'black',
+  borderColor: 'salmon',
+  borderLeftWidth: 0,
+  borderRightWidth: 0,
+  borderTopWidth: 1,
+  borderBottomWidth: 1,
+  paddingLeft: 0,
+  paddingRight: 3,
+  paddingVertical: 5,
+  lineHeight: 23,
+  height: 40,
+});
