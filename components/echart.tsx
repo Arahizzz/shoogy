@@ -1,17 +1,31 @@
 import { SVGRenderer, SkiaChart } from '@wuba/react-native-echarts';
 import { EChartsOption } from 'echarts';
 import { LineChart, ScatterChart } from 'echarts/charts';
-import { GridComponent, MarkPointComponent } from 'echarts/components';
+import {
+  GridComponent,
+  MarkLineComponent,
+  MarkPointComponent,
+  TitleComponent,
+} from 'echarts/components';
 import * as echarts from 'echarts/core';
+import { useSubscription } from 'observable-hooks';
 import React, { useRef, useEffect } from 'react';
 import { useWindowDimensions } from 'react-native';
 import { Observable } from 'rxjs';
-import { useSubscription } from 'observable-hooks';
 
-echarts.use([SVGRenderer, LineChart, GridComponent, ScatterChart, MarkPointComponent]);
+echarts.use([
+  SVGRenderer,
+  LineChart,
+  GridComponent,
+  ScatterChart,
+  MarkPointComponent,
+  MarkLineComponent,
+  TitleComponent,
+]);
 
 type Props = {
   options$: Observable<EChartsOption>;
+  height: number;
 };
 
 export default function EchartComponent(props: Props) {
@@ -23,14 +37,14 @@ export default function EchartComponent(props: Props) {
       chart.current = echarts.init(skiaRef.current, 'light', {
         renderer: 'svg',
         width,
-        height: 250,
+        height: props.height,
       });
     }
     return () => chart.current?.dispose();
   }, []);
   useEffect(() => {
-    chart.current?.resize({ width, height: 250 });
-  }, [width]);
+    chart.current?.resize({ width, height: props.height });
+  }, [width, props.height]);
   useSubscription(props.options$, (options) => {
     chart.current?.setOption(options);
   });

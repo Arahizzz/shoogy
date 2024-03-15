@@ -1,8 +1,10 @@
-import { Button, Input, styled, Text, XGroup } from 'tamagui';
-import { first, merge, Observable, PartialObserver } from 'rxjs';
-import { useObservableState } from 'observable-hooks/src';
-import { useObservableInput, validationError } from '~/components/observable-input';
 import { useObservableCallback } from 'observable-hooks';
+import { useObservableState } from 'observable-hooks/src';
+import { ColorValue } from 'react-native';
+import { first, merge, Observable, PartialObserver } from 'rxjs';
+import { Button, Input, styled, Text, XGroup } from 'tamagui';
+
+import { useObservableInput, validationError } from '~/components/observable-input';
 
 export type ValidationState = Record<string, string>;
 
@@ -15,6 +17,9 @@ type Props = {
   min?: number;
   max?: number;
   step: number;
+
+  color?: ColorValue;
+  fontColor?: ColorValue;
 };
 
 export default function NumericInput(props: Props) {
@@ -51,43 +56,86 @@ export default function NumericInput(props: Props) {
   };
 
   return (
-    <XGroup marginHorizontal={5}>
-      <SideButton onPress={decrement}>-</SideButton>
-      <SmallNumericInput keyboardType={'numeric'} {...inputProps} />
-      <Suffix>{props.suffix}</Suffix>
-      <SideButton onPress={increment}>+</SideButton>
-    </XGroup>
+    <StepperWrapper>
+      <Stepper onPress={decrement} backgroundColor={props.color}>
+        -
+      </Stepper>
+      <SmallNumericInput
+        inputMode="numeric"
+        {...inputProps}
+        borderColor={props.color}
+        shadowColor={props.color}
+        color={props.fontColor ?? 'black'}
+        selectTextOnFocus
+      />
+      {props.suffix && (
+        <Suffix borderColor={props.color} color={props.fontColor ?? 'black'}>
+          {props.suffix}
+        </Suffix>
+      )}
+      <Stepper onPress={increment} backgroundColor={props.color}>
+        +
+      </Stepper>
+    </StepperWrapper>
   );
 }
 
-export const SideButton = styled(Button, {
-  backgroundColor: 'salmon',
-  paddingHorizontal: 10,
+const heightConfig = {
   height: 40,
+  $xs: {
+    height: 30,
+  },
+} as const;
+
+export const StepperWrapper = styled(XGroup, {
+  width: 125,
+  marginHorizontal: 5,
+});
+
+export const Stepper = styled(Button, {
+  height: heightConfig.height,
+  paddingHorizontal: 10,
+  $xs: {
+    height: heightConfig.$xs.height,
+  },
 });
 
 export const SmallNumericInput = styled(Input, {
+  height: heightConfig.height,
   backgroundColor: 'whitesmoke',
   color: 'black',
-  borderColor: 'salmon',
   borderLeftWidth: 0,
   borderRightWidth: 0,
-  minWidth: '60px',
-  paddingHorizontal: 10,
-  height: 40,
+  paddingHorizontal: 0,
+  textAlign: 'center',
+  width: 0,
+  flex: 1,
+  fontSize: 15,
+  fontWeight: '500',
+  $xs: {
+    fontSize: 11,
+    height: heightConfig.$xs.height,
+  },
 });
 
 export const Suffix = styled(Text, {
+  height: heightConfig.height,
   backgroundColor: 'whitesmoke',
   color: 'black',
-  borderColor: 'salmon',
   borderLeftWidth: 0,
   borderRightWidth: 0,
   borderTopWidth: 1,
   borderBottomWidth: 1,
-  paddingLeft: 0,
+  paddingLeft: 5,
   paddingRight: 3,
-  paddingVertical: 5,
-  lineHeight: 23,
-  height: 40,
+  paddingVertical: 0,
+  lineHeight: 33,
+  textAlign: 'right',
+  fontSize: 14,
+  fontWeight: '500',
+  $xs: {
+    fontSize: 11,
+    height: heightConfig.$xs.height,
+    lineHeight: 26,
+  },
 });

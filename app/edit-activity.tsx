@@ -1,30 +1,17 @@
+import { Pizza, Syringe, Trash2 } from '@tamagui/lucide-icons';
+import { useObservablePickState } from 'observable-hooks';
 import { useObservableState } from 'observable-hooks/src';
 import React, { useEffect } from 'react';
-import {
-  BehaviorSubject,
-  combineLatest,
-  combineLatestWith,
-  debounceTime,
-  first,
-  map,
-  Observable,
-  of,
-  switchMap,
-} from 'rxjs';
-import { Adapt, Button, ScrollView, Select, Sheet, XGroup, XStack, YStack } from 'tamagui';
-import { match, P } from 'ts-pattern';
+import { ColorValue } from 'react-native';
+import { BehaviorSubject, first, map, Observable, of } from 'rxjs';
+import { Button, ScrollView, Stack, styled, XStack, YStack } from 'tamagui';
 
-import ScatterChart from '~/components/scatter-chart';
-import { getChartMarkers } from '~/core/chart';
-import { Apidra, Injection, InjectionParams } from '~/core/injection';
-import { Meal, MealParams } from '~/core/meal';
-import { linkNext } from '~/core/rxjs';
-import { getCombinedSugarPlot } from '~/core/sugarInfluence';
-import { getCurrentTick, incrementTick } from '~/core/time';
+import EditActivityChart, { Activity } from '~/components/edit-activity-chart';
 import NumericInput from '~/components/numeric-input';
-import { ChevronDown, Delete } from '@tamagui/lucide-icons';
-import CombinedChart, { Activity } from '~/components/combined-chart';
 import TimeInput from '~/components/time-input';
+import { Apidra } from '~/core/injection';
+import { linkNext } from '~/core/rxjs';
+import { getCurrentTick, incrementTick } from '~/core/time';
 
 type ActivityState = Activity & { id: number };
 
@@ -103,20 +90,39 @@ export default function EditActivityScreen() {
 
   return (
     <ScrollView stickyHeaderIndices={[0]}>
-      <YStack backgroundColor={'whitesmoke'} alignItems="center">
-        <CombinedChart activities$={store.activitiesState$} startSugar$={store.startSugar$} />
-        <XStack>
-          <StartSugarEdit />
+      <YStack backgroundColor="whitesmoke" alignItems="center">
+        <EditActivityChart activities$={store.activitiesState$} startSugar$={store.startSugar$} />
+        <XStack justifyContent="center" gap={10}>
+          {/*<StartSugarEdit />*/}
           <Button
+            icon={<Pizza />}
+            variant="outlined"
+            backgroundColor="$orange10Light"
+            width={150}
+            onPress={() =>
+              store.newActivity({
+                type: 'meal',
+                carbsCount: 0,
+                carbsAbsorptionRatePerHr: 30,
+                startTime: getCurrentTick(),
+              })
+            }>
+            Meal
+          </Button>
+          <Button
+            icon={<Syringe />}
+            variant="outlined"
+            backgroundColor="$blue10Light"
+            width={150}
             onPress={() =>
               store.newActivity({
                 type: 'injection',
                 activity: Apidra,
-                insulinAmount: 3,
+                insulinAmount: 0,
                 startTime: getCurrentTick(),
               })
             }>
-            Add Activity
+            Injection
           </Button>
         </XStack>
       </YStack>
@@ -128,7 +134,7 @@ export default function EditActivityScreen() {
 function StartSugarEdit() {
   return (
     <NumericInput
-      id={'start-sugar'}
+      id="start-sugar"
       initialValue={of(5)}
       min={0}
       step={0.1}
@@ -141,7 +147,13 @@ function ActivitiesEdit() {
   const activities = useObservableState(store.activitiesState$);
 
   return (
-    <YStack alignItems={'flex-start'}>
+    <YStack
+      alignItems="stretch"
+      alignSelf="center"
+      marginTop={10}
+      marginHorizontal={15}
+      maxWidth={600}
+      width="90%">
       {activities.map((activity$) => (
         <ActivityEdit key={activity$.value.id.toString()} activity$={activity$} />
       ))}
@@ -150,183 +162,174 @@ function ActivitiesEdit() {
 }
 
 function ActivityEdit({ activity$ }: { activity$: BehaviorSubject<ActivityState> }) {
-  const editor = useObservableState(() =>
-    activity$.pipe(
-      map((activity) => {
-        return match(activity.type)
-          .returnType<React.JSX.Element>()
-          .with('meal', () => (
-            <MealEdit
-              key={activity.id}
-              meal$={activity$ as unknown as BehaviorSubject<MealParams>}
-            />
-          ))
-          .with('injection', () => (
-            <InsulinEdit
-              key={activity.id}
-              insulin$={activity$ as unknown as BehaviorSubject<InjectionParams>}
-            />
-          ))
-          .exhaustive();
-      })
-    )
-  );
+  const { type } = useObservablePickState(activity$, activity$.value, 'type');
 
-  return (
-    <XGroup marginVertical={5}>
-      <ActivityTimeEdit activity$={activity$} />
-      <ActivityTypeSelector activity$={activity$} />
-      {editor}
-      <DeleteButton activity$={activity$} />
-    </XGroup>
+  return type === 'meal' ? (
+    <MealEdit meal$={activity$ as BehaviorSubject<ActivityState & { type: 'meal' }>} />
+  ) : (
+    <InsulinEdit insulin$={activity$ as BehaviorSubject<ActivityState & { type: 'injection' }>} />
   );
 }
 
-function ActivityTimeEdit({ activity$ }: { activity$: BehaviorSubject<ActivityState> }) {
-  const activity = useObservableState(activity$);
-
+function ActivityTimeEdit({
+  activity$,
+  color,
+  fontColor,
+}: {
+  activity$: BehaviorSubject<ActivityState>;
+  color?: ColorValue;
+  fontColor?: ColorValue;
+}) {
   return (
     <TimeInput
-      id={'time'}
-      initialValue={of(activity.startTime)}
+      color={color}
+      fontColor={fontColor}
+      id="time"
+      initialValue={of(activity$.value.startTime)}
       $changes={{
         next: (startTime: number) => {
-          activity$.next({ ...activity, startTime });
+          activity$.next({ ...activity$.value, startTime });
         },
       }}
     />
   );
 }
 
-function DeleteButton({ activity$ }: { activity$: BehaviorSubject<ActivityState> }) {
-  const activity = useObservableState(activity$);
+function DeleteButton({ id, color }: { id: number; color?: string }) {
   return (
     <Button
-      backgroundColor={'red'}
-      onPress={() => store.removeActivity(activity.id)}
-      icon={<Delete color={'white'} />}></Button>
+      variant="outlined"
+      borderColor={undefined}
+      paddingHorizontal={5}
+      height={40}
+      $xs={{ height: 30 }}
+      onPress={() => store.removeActivity(id)}
+      icon={<Trash2 color={color} size="$1" />}
+    />
   );
 }
 
-function ActivityTypeSelector({ activity$ }: { activity$: BehaviorSubject<ActivityState> }) {
-  const activity = useObservableState(activity$);
-
-  const changeType = (type: 'meal' | 'injection') => {
-    const newActivity = match(type)
-      .returnType<ActivityState>()
-      .with('meal', () => ({
-        id: activity.id,
-        type: 'meal',
-        carbsCount: 100,
-        carbsAbsorptionRatePerHr: 40,
-        startTime: getCurrentTick(),
-      }))
-      .with('injection', () => ({
-        id: activity.id,
-        type: 'injection',
-        activity: Apidra,
-        insulinAmount: 5,
-        startTime: getCurrentTick(),
-      }))
-      .exhaustive();
-
-    activity$.next(newActivity);
-  };
+function MealEdit({ meal$ }: { meal$: BehaviorSubject<ActivityState & { type: 'meal' }> }) {
+  const color = '$orange10Light';
+  const fontColor = '$orange8Dark';
 
   return (
-    <Select value={activity.type} onValueChange={changeType}>
-      <Select.Trigger
-        height={40}
-        width={85}
-        fontSize={15}
-        paddingVertical={0}
-        backgroundColor={'whitesmoke'}
-        iconAfter={<ChevronDown color={'black'} />}>
-        <Select.Value placeholder="Something" />
-      </Select.Trigger>
-      <Adapt platform="touch">
-        <Sheet
-          native
-          modal
-          dismissOnSnapToBottom
-          animationConfig={{
-            type: 'spring',
-            damping: 20,
-            mass: 1.2,
-            stiffness: 250,
-          }}>
-          <Sheet.Frame>
-            <Sheet.ScrollView>
-              <Adapt.Contents />
-            </Sheet.ScrollView>
-          </Sheet.Frame>
-          <Sheet.Overlay animation="lazy" enterStyle={{ opacity: 0 }} exitStyle={{ opacity: 0 }} />
-        </Sheet>
-      </Adapt>
-
-      <Select.Content>
-        <Select.Viewport>
-          <Select.Item value={'meal'} index={0}>
-            <Select.ItemText>🥞</Select.ItemText>
-          </Select.Item>
-          <Select.Item value={'injection'} index={1}>
-            <Select.ItemText>💉</Select.ItemText>
-          </Select.Item>
-        </Select.Viewport>
-      </Select.Content>
-    </Select>
+    <ActivityEditCard
+      backgroundColor="rgba(237, 95, 0, 0.25)"
+      $xs={{
+        flexDirection: 'column',
+        alignItems: 'stretch',
+        gap: 5,
+      }}>
+      <PizzaIcon />
+      <XStack justifyContent="space-between">
+        <DeleteButton id={meal$.value.id} color={color} />
+        <ActivityTimeEdit
+          color={color}
+          fontColor={fontColor}
+          activity$={meal$ as BehaviorSubject<ActivityState>}
+        />
+      </XStack>
+      <XStack justifyContent="space-between">
+        <NumericInput
+          color={color}
+          fontColor={fontColor}
+          id="meal-carbs-absorption-rate"
+          suffix="ᵍ⁄ₕ"
+          initialValue={meal$.pipe(map((meal) => meal.carbsAbsorptionRatePerHr))}
+          min={0}
+          step={1}
+          $changes={{
+            next: (carbsAbsorptionRatePerHr: number) => {
+              const prevMeal = meal$.value;
+              meal$.next({ ...prevMeal, carbsAbsorptionRatePerHr });
+            },
+          }}
+        />
+        <NumericInput
+          color={color}
+          fontColor={fontColor}
+          id="meal-carbs"
+          suffix="g"
+          initialValue={meal$.pipe(map((meal) => meal.carbsCount))}
+          min={0}
+          step={1}
+          $changes={{
+            next: (carbsCount: number) => {
+              const prevMeal = meal$.value;
+              meal$.next({ ...prevMeal, carbsCount });
+            },
+          }}
+        />
+      </XStack>
+    </ActivityEditCard>
   );
 }
 
-function MealEdit({ meal$ }: { meal$: BehaviorSubject<MealParams> }) {
+function InsulinEdit({
+  insulin$,
+}: {
+  insulin$: BehaviorSubject<ActivityState & { type: 'injection' }>;
+}) {
+  const color = '$blue10Light';
+  const fontColor = '$blue8Dark';
+
   return (
-    <XGroup>
-      <NumericInput
-        id={'meal-carbs'}
-        suffix={'g'}
-        initialValue={meal$.pipe(map((meal) => meal.carbsCount))}
-        min={0}
-        step={1}
-        $changes={{
-          next: (carbsCount: number) => {
-            const prevMeal = meal$.value;
-            meal$.next({ ...prevMeal, carbsCount });
-          },
-        }}
-      />
-      <NumericInput
-        id={'meal-carbs-absorption-rate'}
-        suffix={'g/h'}
-        initialValue={meal$.pipe(map((meal) => meal.carbsAbsorptionRatePerHr))}
-        min={0}
-        step={1}
-        $changes={{
-          next: (carbsAbsorptionRatePerHr: number) => {
-            const prevMeal = meal$.value;
-            meal$.next({ ...prevMeal, carbsAbsorptionRatePerHr });
-          },
-        }}
-      />
-    </XGroup>
+    <ActivityEditCard backgroundColor="rgba(0, 106, 220, 0.25)">
+      <SyringeIcon />
+      <XStack>
+        <DeleteButton id={insulin$.value.id} color={color} />
+        <ActivityTimeEdit
+          color={color}
+          fontColor={fontColor}
+          activity$={insulin$ as BehaviorSubject<ActivityState>}
+        />
+      </XStack>
+      <XStack>
+        <NumericInput
+          color={color}
+          fontColor={fontColor}
+          id="insulin-amount"
+          suffix="U"
+          initialValue={insulin$.pipe(map((injection) => injection.insulinAmount))}
+          min={0}
+          step={1}
+          $changes={{
+            next: (insulinAmount: number) => {
+              const prevInjection = insulin$.value;
+              insulin$.next({ ...prevInjection, insulinAmount });
+            },
+          }}
+        />
+      </XStack>
+    </ActivityEditCard>
   );
 }
 
-function InsulinEdit({ insulin$ }: { insulin$: BehaviorSubject<InjectionParams> }) {
-  return (
-    <XGroup>
-      <NumericInput
-        id={'insulin-amount'}
-        suffix={'U'}
-        initialValue={insulin$.pipe(map((injection) => injection.insulinAmount))}
-        min={0}
-        step={1}
-        $changes={{
-          next: (insulinAmount: number) => {
-            const prevInjection = insulin$.value;
-            insulin$.next({ ...prevInjection, insulinAmount });
-          },
-        }}
-      />
-    </XGroup>
-  );
-}
+const ActivityEditCard = styled(Stack, {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignSelf: 'stretch',
+  padding: 10,
+  borderRadius: 7,
+  marginVertical: 5,
+  $sm: {
+    paddingHorizontal: 3,
+  },
+});
+
+const cornerIconPosition = {
+  position: 'absolute',
+  top: -15,
+  left: -10,
+  height: 30,
+} as const;
+
+const SyringeIcon = styled(Syringe, {
+  ...cornerIconPosition,
+  color: '$blue10Light',
+});
+const PizzaIcon = styled(Pizza, {
+  ...cornerIconPosition,
+  color: '$orange10Light',
+});

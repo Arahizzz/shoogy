@@ -1,12 +1,14 @@
-import { XGroup } from 'tamagui';
-import { merge, Observable, of, PartialObserver } from 'rxjs';
-import { useObservableState } from 'observable-hooks/src';
-import { useObservableInput, validationError } from '~/components/observable-input';
-import { SideButton, SmallNumericInput } from './numeric-input';
-import React, { useState } from 'react';
-import { decrementTick, getCurrentTick, incrementTick, tickToTime, timeToTick } from '~/core/time';
+import { addDays, differenceInHours, set, subDays } from 'date-fns';
 import { useObservableCallback } from 'observable-hooks';
-import { addDays, differenceInHours, format, set, setHours, subDays } from 'date-fns';
+import { useObservableState } from 'observable-hooks/src';
+import React, { useState } from 'react';
+import { ColorValue } from 'react-native';
+import { merge, Observable, of, PartialObserver } from 'rxjs';
+
+import { SmallNumericInput, Stepper, StepperWrapper } from './numeric-input';
+
+import { useObservableInput, validationError } from '~/components/observable-input';
+import { decrementTick, getCurrentTick, incrementTick, tickToTime, timeToTick } from '~/core/time';
 
 export type ValidationState = Record<string, string>;
 
@@ -16,9 +18,12 @@ type Props = {
   initialValue: Observable<number>;
   $changes?: PartialObserver<number>;
   $validation?: PartialObserver<ValidationState>;
+
+  color?: ColorValue;
+  fontColor?: ColorValue;
 };
 
-const timePattern = /([0-2][0-3]):([0-5][0-9])/;
+const timePattern = /([0-2][0-9]):([0-5][0-9])/;
 
 export default function TimeInput(props: Props) {
   const now = useState(getCurrentTick())[0];
@@ -27,13 +32,13 @@ export default function TimeInput(props: Props) {
     const match = value.match(timePattern);
     if (!match) return validationError(props.id, 'Invalid time format');
 
-    const hours = parseInt(match[1]);
-    const minutes = parseInt(match[2]);
+    const hours = parseInt(match[1], 10);
+    const minutes = parseInt(match[2], 10);
     const nowTime = new Date(tickToTime(now));
 
     let time = set(nowTime, {
-      hours: hours,
-      minutes: minutes,
+      hours,
+      minutes,
     });
     if (differenceInHours(nowTime, time) < -12) {
       time = subDays(time, 1);
@@ -58,7 +63,7 @@ export default function TimeInput(props: Props) {
     value$,
     $changes: props.$changes,
     $validation: props.$validation,
-    mask: [/[0-2]/, /[0-3]/, ':', /[0-5]/, /[0-9]/],
+    mask: [/[0-2]/, /[0-9]/, ':', /[0-5]/, /[0-9]/],
     validate,
     display,
   });
@@ -72,10 +77,20 @@ export default function TimeInput(props: Props) {
   };
 
   return (
-    <XGroup marginHorizontal={5}>
-      <SideButton onPress={decrement}>-</SideButton>
-      <SmallNumericInput keyboardType={'numeric'} {...inputProps} />
-      <SideButton onPress={increment}>+</SideButton>
-    </XGroup>
+    <StepperWrapper>
+      <Stepper backgroundColor={props.color} onPress={decrement}>
+        -
+      </Stepper>
+      <SmallNumericInput
+        color={props.fontColor ?? 'black'}
+        borderColor={props.color}
+        keyboardType="numeric"
+        selectTextOnFocus
+        {...inputProps}
+      />
+      <Stepper backgroundColor={props.color} onPress={increment}>
+        +
+      </Stepper>
+    </StepperWrapper>
   );
 }

@@ -2,12 +2,12 @@ import { useObservable } from 'observable-hooks';
 import { combineLatest, combineLatestWith, debounceTime, map, Observable, switchMap } from 'rxjs';
 import { match } from 'ts-pattern';
 
+import ScatterChart from '~/components/scatter-chart';
 import { getChartMarkers } from '~/core/chart';
 import { Injection, InjectionParams } from '~/core/injection';
 import { Meal, MealParams } from '~/core/meal';
 import { getCombinedSugarPlot } from '~/core/sugarInfluence';
-import { getCurrentTick, incrementTick, tickResolution } from '~/core/time';
-import ScatterChart from '~/components/scatter-chart';
+import { incrementTick, tickResolution } from '~/core/time';
 
 export type Activity = ({ type: 'meal' } & MealParams) | ({ type: 'injection' } & InjectionParams);
 
@@ -18,7 +18,7 @@ type CombinedChartProps = {
   startSugar$: Observable<number>;
 };
 
-export default function CombinedChart({ activities$, startSugar$ }: CombinedChartProps) {
+export default function EditActivityChart({ activities$, startSugar$ }: CombinedChartProps) {
   const plotInfo$ = useObservable(() =>
     activities$.pipe(
       map((activities) =>
@@ -45,12 +45,12 @@ export default function CombinedChart({ activities$, startSugar$ }: CombinedChar
           incrementTick(start, i)
         );
         const activityPlot = getCombinedSugarPlot(xs, activities, startSugar);
-        const markPoint = getChartMarkers(activities);
+        const markLine = getChartMarkers(activities);
 
-        return { xs, ys: activityPlot.ys, markPoint };
+        return { xs, ys: activityPlot.ys, markLine };
       })
     )
   );
 
-  return <ScatterChart title={'Combined Plot'} data$={plotInfo$} />;
+  return <ScatterChart data$={plotInfo$} />;
 }

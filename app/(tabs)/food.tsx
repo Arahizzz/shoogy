@@ -1,9 +1,9 @@
+import { of } from 'rxjs';
 import { Stack } from 'tamagui';
 
 import ScatterChart from '~/components/scatter-chart';
 import { Meal } from '~/core/meal';
 import { getCurrentTick, incrementTick } from '~/core/time';
-import { of } from 'rxjs';
 
 export default function FoodScreen() {
   const now = getCurrentTick();

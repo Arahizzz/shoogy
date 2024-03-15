@@ -20,7 +20,8 @@
             "packagingOptions": {
               "pickFirst": ["**/libc++_shared.so"]
             },
-            "newArchEnabled": true
+            "newArchEnabled": true,
+            "windowSoftInputMode": "adjustResize"
           },
           "ios": {
             "newArchEnabled": true

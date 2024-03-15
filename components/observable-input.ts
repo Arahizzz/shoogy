@@ -1,7 +1,8 @@
-import { filter, map, merge, Observable, PartialObserver, share } from 'rxjs';
-import { Mask, useMaskedInputProps } from 'react-native-mask-input';
-import { useObservableState } from 'observable-hooks/src';
 import { useObservable, useSubscription } from 'observable-hooks';
+import { useObservableState } from 'observable-hooks/src';
+import { Mask, useMaskedInputProps } from 'react-native-mask-input';
+import { filter, map, merge, Observable, PartialObserver, share } from 'rxjs';
+
 import { ValidationState } from '~/components/numeric-input';
 
 type ObservableInputProps<T, TId extends string> = {
@@ -18,14 +19,17 @@ export const validationError = <TId extends string>(id: TId, message: string) =>
   [id]: message,
 });
 
-export function useObservableInput<T, TId extends string>(props: ObservableInputProps<T, TId>) {
-  const [state, setState] = useObservableState<string>(
+// eslint-disable-next-line
+export function useObservableInput<T extends {}, TId extends string>(
+  props: ObservableInputProps<T, TId>
+) {
+  const [text, setText] = useObservableState<string>(
     (input$) => merge(props.value$.pipe(map((n) => props.display(n))), input$),
     ''
   );
   const maskedInputProps = useMaskedInputProps({
-    value: state,
-    onChangeText: setState,
+    value: text,
+    onChangeText: setText,
     mask: props.mask,
     maskAutoComplete: false,
   });
@@ -35,13 +39,13 @@ export function useObservableInput<T, TId extends string>(props: ObservableInput
         map(([value]) => props.validate(value)),
         share()
       ),
-    [state]
+    [text]
   );
-  const isValid = (value: T | Record<TId, string>): value is T => {
-    return value && !(typeof value === 'object' && props.id in value);
-  };
   const isInvalid = (value: T | Record<TId, string>): value is Record<TId, string> => {
-    return value && typeof value === 'object' && props.id in value;
+    return typeof value === 'object' && props.id in value;
+  };
+  const isValid = (value: T | Record<TId, string>): value is T => {
+    return !isInvalid(value);
   };
   const changes$ = useObservable(() => validationState$.pipe(filter(isValid)));
   const errors$ = useObservable(() => validationState$.pipe(filter(isInvalid)));
@@ -51,7 +55,7 @@ export function useObservableInput<T, TId extends string>(props: ObservableInput
 
   return {
     inputProps: maskedInputProps,
-    setState,
+    setText,
     changes$,
     errors$,
   };

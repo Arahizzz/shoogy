@@ -1,6 +1,7 @@
 import { Injection } from '~/core/injection';
 import { Meal } from '~/core/meal';
 import { tickToTime } from '~/core/time';
+import type echarts from 'echarts';
 
 export type Axis = number[] | Float64Array;
 
@@ -9,32 +10,41 @@ export type Plot = {
   ys: Axis;
 };
 
-export function getChartMarkers(
-  activities: (Meal | Injection)[]
-): echarts.MarkPointComponentOption {
+export function getChartMarkers(activities: (Meal | Injection)[]): echarts.MarkLineComponentOption {
   return {
+    symbol: ['none', 'circle'],
+    symbolSize: 7,
     data: activities.map((activity) => {
       if (activity instanceof Meal) {
         return {
           name: 'Meal',
-          coord: [tickToTime(activity.startTime), 2],
-          value: `${activity.carbsCount}g`,
-          itemStyle: {
-            color: 'yellow',
+          xAxis: tickToTime(activity.startTime),
+          label: {
+            formatter: `${activity.carbsCount}g`,
+            distance: 20,
+            color: 'hsl(24, 100%, 46.5%)',
           },
-          symbol: 'square',
-          symbolSize: 35,
+          itemStyle: {
+            color: 'hsl(24, 100%, 46.5%)',
+          },
+          lineStyle: {
+            width: 0,
+          },
         };
       } else {
         return {
           name: 'Injection',
-          coord: [tickToTime(activity.startTime), 10],
-          value: `${activity.insulinAmount}U`,
-          itemStyle: {
-            color: 'blue',
+          xAxis: tickToTime(activity.startTime),
+          label: {
+            formatter: `${activity.insulinAmount}U`,
+            color: 'hsl(208, 100%, 47.3%)',
           },
-          symbol: 'circle',
-          symbolSize: 35,
+          itemStyle: {
+            color: 'hsl(208, 100%, 47.3%)',
+          },
+          lineStyle: {
+            width: 0,
+          },
         };
       }
     }),
