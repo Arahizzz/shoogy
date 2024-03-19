@@ -24,7 +24,7 @@ export class Meal implements Activity, SugarInfluence {
     this.carbsAbsorptionRatePerHr = carbsAbsorptionRatePerHr;
     this.startTime = startTime;
     const carbsAbsorptionRatePerMin = carbsAbsorptionRatePerHr / 60;
-    this.duration = carbsCount / carbsAbsorptionRatePerMin;
+    this.duration = Math.max(carbsCount / carbsAbsorptionRatePerMin, 30);
     this.activityCurve = this.initActivityCurve();
   }
 
