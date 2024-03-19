@@ -325,11 +325,5 @@ const cornerIconPosition = {
   height: 30,
 } as const;
 
-const SyringeIcon = styled(Syringe, {
-  ...cornerIconPosition,
-  color: '$blue10Light',
-});
-const PizzaIcon = styled(Pizza, {
-  ...cornerIconPosition,
-  color: '$orange10Light',
-});
+const SyringeIcon = () => <Syringe {...cornerIconPosition} color={'$blue10Light'} />;
+const PizzaIcon = () => <Pizza {...cornerIconPosition} color={'$orange10Light'} />;

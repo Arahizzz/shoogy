@@ -16,21 +16,31 @@ export default function TabLayout() {
         tabBarActiveTintColor: 'black',
       }}>
       <Tabs.Screen
-        name="index"
+        name="activities"
         options={{
-          title: 'Combined',
+          title: 'Activities',
+          headerShown: false,
+        }}
+      />
+      <Tabs.Screen
+        name={'profile'}
+        options={{
+          title: 'Profile',
+          headerShown: false,
         }}
       />
       <Tabs.Screen
         name="insulin"
         options={{
           title: 'Insulin',
+          href: null,
         }}
       />
       <Tabs.Screen
         name="food"
         options={{
           title: 'Food',
+          href: null,
         }}
       />
     </Tabs>
