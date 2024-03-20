@@ -9,6 +9,12 @@ export default function ProfileLayout() {
           title: 'Profile',
         }}
       />
+      <Stack.Screen
+        name="[id]"
+        options={{
+          title: 'Edit Profile',
+        }}
+      />
     </Stack>
   );
 }

@@ -1,23 +1,38 @@
 import { appSchema, Model, tableSchema } from '@nozbe/watermelondb';
-import { field, text } from '@nozbe/watermelondb/decorators';
+import { field, text, writer } from '@nozbe/watermelondb/decorators';
 
 export const schema = appSchema({
-  version: 2,
+  version: 3,
   tables: [
     tableSchema({
-      name: 'board_games',
+      name: 'profile',
       columns: [
-        { name: 'title', type: 'string', isIndexed: true }, // indexed means that we can search the column based on the title
-        { name: 'min_players', type: 'number' },
+        { name: 'name', type: 'string' },
+        { name: 'insulin_sensitivity', type: 'number' },
+        { name: 'carb_sensitivity', type: 'number' },
+      ],
+    }),
+    tableSchema({
+      name: 'settings',
+      columns: [
+        { name: 'name', type: 'string', isIndexed: true },
+        { name: 'value', type: 'string' },
       ],
     }),
   ],
 });
 
-export class BoardGame extends Model {
-  static table = 'board_games'; // bind the model to specific table
-  // @ts-ignore
-  @text('title') title: string; // binds a table column to a model property
-  // @ts-ignore
-  @field('min_players') minPlayers; // for non-text fields you the "field" decorator
+export class Profile extends Model {
+  static table = 'profile';
+
+  @field('name') name: string;
+  @field('insulin_sensitivity') insulinSensitivity: number;
+  @field('carb_sensitivity') carbSensitivity: number;
+}
+
+export class Setting extends Model {
+  static table = 'settings';
+
+  @text('name') name: string;
+  @text('value') value: string;
 }

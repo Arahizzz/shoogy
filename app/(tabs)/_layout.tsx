@@ -1,13 +1,6 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Tabs } from 'expo-router';
 import { StyleSheet } from 'react-native';
-
-function TabBarIcon(props: {
-  name: React.ComponentProps<typeof FontAwesome>['name'];
-  color: string;
-}) {
-  return <FontAwesome size={28} style={styles.tabBarIcon} {...props} />;
-}
+import { Activity, FileHeart } from '@tamagui/lucide-icons';
 
 export default function TabLayout() {
   return (
@@ -20,13 +13,15 @@ export default function TabLayout() {
         options={{
           title: 'Activities',
           headerShown: false,
+          tabBarIcon: (props) => <Activity color={'black'} size={20} />,
         }}
       />
       <Tabs.Screen
         name={'profile'}
         options={{
-          title: 'Profile',
+          title: 'Profiles',
           headerShown: false,
+          tabBarIcon: (props) => <FileHeart color={'black'} size={20} />,
         }}
       />
       <Tabs.Screen
