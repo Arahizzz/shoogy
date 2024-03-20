@@ -1,7 +1,8 @@
+import type echarts from 'echarts';
+
 import { Injection } from '~/core/injection';
 import { Meal } from '~/core/meal';
 import { tickToTime } from '~/core/time';
-import type echarts from 'echarts';
 
 export type Axis = number[] | Float64Array;
 

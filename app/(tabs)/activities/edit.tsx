@@ -325,5 +325,5 @@ const cornerIconPosition = {
   height: 30,
 } as const;
 
-const SyringeIcon = () => <Syringe {...cornerIconPosition} color={'$blue10Light'} />;
-const PizzaIcon = () => <Pizza {...cornerIconPosition} color={'$orange10Light'} />;
+const SyringeIcon = () => <Syringe {...cornerIconPosition} color="$blue10Light" />;
+const PizzaIcon = () => <Pizza {...cornerIconPosition} color="$orange10Light" />;

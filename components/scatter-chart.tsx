@@ -1,10 +1,9 @@
-import { EChartsOption, MarkPointComponentOption } from 'echarts';
 import type echarts from 'echarts';
-import { MarkLineOption } from 'echarts/types/dist/shared';
+import { EChartsOption } from 'echarts';
 import { useObservable } from 'observable-hooks';
 import React from 'react';
 import { map, Observable } from 'rxjs';
-import { H5, View, YStack } from 'tamagui';
+import { View, YStack } from 'tamagui';
 
 import EchartComponent from './echart';
 

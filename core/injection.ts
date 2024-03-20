@@ -1,4 +1,4 @@
-import { Interpolator, csplineMonot } from 'algomatic';
+import { csplineMonot } from 'algomatic';
 import type { Activity } from 'core/activity';
 import { InsulinSensitivity } from 'core/settings';
 import type { SugarInfluence } from 'core/sugarInfluence';

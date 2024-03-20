@@ -1,38 +1,27 @@
-import { appSchema, Model, tableSchema } from '@nozbe/watermelondb';
-import { field, text, writer } from '@nozbe/watermelondb/decorators';
+import { RxJsonSchema } from 'rxdb/src/types';
 
-export const schema = appSchema({
-  version: 3,
-  tables: [
-    tableSchema({
-      name: 'profile',
-      columns: [
-        { name: 'name', type: 'string' },
-        { name: 'insulin_sensitivity', type: 'number' },
-        { name: 'carb_sensitivity', type: 'number' },
-      ],
-    }),
-    tableSchema({
-      name: 'settings',
-      columns: [
-        { name: 'name', type: 'string', isIndexed: true },
-        { name: 'value', type: 'string' },
-      ],
-    }),
-  ],
-});
+import { Profile } from '~/core/models/profile';
 
-export class Profile extends Model {
-  static table = 'profile';
-
-  @field('name') name: string;
-  @field('insulin_sensitivity') insulinSensitivity: number;
-  @field('carb_sensitivity') carbSensitivity: number;
-}
-
-export class Setting extends Model {
-  static table = 'settings';
-
-  @text('name') name: string;
-  @text('value') value: string;
-}
+export const profileSchema = {
+  title: 'Profile',
+  version: 0,
+  description: "Collection of user's individual parameters",
+  type: 'object',
+  properties: {
+    id: {
+      type: 'string',
+      maxLength: 36, // <- the primary key must have set maxLength
+    },
+    name: {
+      type: 'string',
+    },
+    insulinSensitivity: {
+      type: 'number',
+    },
+    carbSensitivity: {
+      type: 'number',
+    },
+  },
+  primaryKey: 'id',
+  required: ['id', 'name', 'insulinSensitivity', 'carbSensitivity'],
+} as const satisfies RxJsonSchema<Profile>;

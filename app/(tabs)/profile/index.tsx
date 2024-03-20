@@ -1,26 +1,23 @@
-import { YStack, Text, Card, Button, View } from 'tamagui';
-import { db } from '~/core/db';
-import { Profile } from '~/core/db/schema';
-import { useObservableState } from 'observable-hooks/src';
 import { ChevronRight } from '@tamagui/lucide-icons';
 import { Link } from 'expo-router';
-import { useSubscription } from 'observable-hooks';
-import { withObservables } from '@nozbe/watermelondb/react';
+import { useObservableState } from 'observable-hooks/src';
+import { Button, Card, Text, View, YStack } from 'tamagui';
 
-const addProfile = () => {
-  return db.write(() => {
-    return db.get<Profile>('profile').create((profile) => {
-      profile.name = 'New Profile';
-      profile.insulinSensitivity = 3;
-      profile.carbSensitivity = 10;
-    });
-  });
-};
-
-const profiles$ = db.get<Profile>('profile').query().observe();
+import { useDb } from '~/core/db';
 
 export default function ProfileScreen() {
-  const profilesList = useObservableState(profiles$, []);
+  const db = useDb();
+  const profiles = db.profiles;
+  const addProfile = async () => {
+    await profiles.insert({
+      id: crypto.randomUUID(),
+      name: 'New Profile',
+      carbSensitivity: 10,
+      insulinSensitivity: 10,
+    });
+  };
+  const [profilesList] = useObservableState(() => profiles.find().$, []);
+
   return (
     <YStack alignItems="center" gap={5}>
       <Button onPress={addProfile}>
@@ -29,14 +26,14 @@ export default function ProfileScreen() {
       {profilesList.map((profile) => (
         <Card key={profile.id} width={400}>
           <Card.Background
-            backgroundColor={'white'}
-            borderColor={'black'}
+            backgroundColor="white"
+            borderColor="black"
             borderRadius={10}
             borderWidth={2}
           />
-          <Card.Header flexDirection={'row'} justifyContent={'space-between'} alignItems={'center'}>
+          <Card.Header flexDirection="row" justifyContent="space-between" alignItems="center">
             <View>
-              <Text color={'black'}>{profile.name}</Text>
+              <Text color="black">{profile.name}</Text>
             </View>
             <Link href={{ pathname: '/(tabs)/profile/[id]', params: { id: profile.id } }}>
               <Button paddingRight={0}>
