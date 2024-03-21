@@ -1,0 +1,46 @@
+diff --git a/node_modules/rxdb/src/plugins/storage-dexie/dexie-query.ts b/node_modules/rxdb/src/plugins/storage-dexie/dexie-query.ts
+index 16838a2..cf3a128 100644
+--- a/node_modules/rxdb/src/plugins/storage-dexie/dexie-query.ts
++++ b/node_modules/rxdb/src/plugins/storage-dexie/dexie-query.ts
+@@ -13,6 +13,7 @@ import {
+     fromDexieToStorage
+ } from './dexie-helper.ts';
+ import type { RxStorageInstanceDexie } from './rx-storage-instance-dexie.ts';
++import Dexie from 'dexie';
+ 
+ export function mapKeyForKeyRange(k: any) {
+     if (k === INDEX_MIN) {
+@@ -130,7 +131,8 @@ export async function dexieQuery<RxDocType>(
+ 
+ 
+             const cursorReq = index.openCursor(keyRange);
+-            await new Promise<void>(res => {
++            await Dexie.waitFor(new Promise<void>((res, rej) => {
++                cursorReq.onerror = (err: any) => rej(err);
+                 cursorReq.onsuccess = function (e: any) {
+                     const cursor = e.target.result;
+                     if (cursor) {
+@@ -159,7 +161,7 @@ export async function dexieQuery<RxDocType>(
+                         res();
+                     }
+                 };
+-            });
++            }));
+ 
+ 
+         }
+@@ -225,12 +227,12 @@ export async function dexieCount<RxDocType>(
+                 + ']';
+             index = store.index(indexName);
+             const request = index.count(keyRange);
+-            count = await new Promise<number>((res, rej) => {
++            count = await Dexie.waitFor(new Promise<number>((res, rej) => {
+                 request.onsuccess = function () {
+                     res(request.result);
+                 };
+                 request.onerror = (err: any) => rej(err);
+-            });
++            }));
+         }
+     );
+     return count;

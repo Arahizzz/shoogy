@@ -1,53 +1,50 @@
 import { useObservable } from 'observable-hooks';
+import { Platform } from 'react-native';
 import { createRxDatabase } from 'rxdb';
-import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode';
-import { getRxStorageLoki } from 'rxdb/plugins/storage-lokijs';
+import { disableWarnings, RxDBDevModePlugin } from 'rxdb/plugins/dev-mode';
 import { addRxPlugin } from 'rxdb/src';
-import { type MangoQueryNoLimit, RxCollection, RxDatabase, RxDocument } from 'rxdb/src/types';
+import { getRxStorageDexie } from 'rxdb/src/plugins/storage-dexie';
+import { type MangoQueryNoLimit, RxDatabase, RxDocument } from 'rxdb/src/types';
 import { filter, Observable } from 'rxjs';
 
-import { PartitionedAsyncStorageAdapter } from '~/core/db/lokijs';
-import { profileSchema } from '~/core/db/schema';
-import { Profile } from '~/core/models/profile';
+import { collections, DatabaseCollections, GetDocType } from '~/core/db/collections';
+import { IDBKeyRange, indexedDB } from '~/core/db/indexdb';
 import { isDefined } from '~/core/utils';
-import { Platform } from 'react-native';
 
-type DatabaseCollections = {
-  profiles: RxCollection<Profile>;
-};
 export type Database = RxDatabase<DatabaseCollections>;
 
 let _db: Database | null = null;
+
 export const getDb = (async () => {
   if (__DEV__) {
-    // await AsyncStorage.clear();
+    disableWarnings();
     // @ts-ignore
     addRxPlugin(RxDBDevModePlugin);
-    //   console.log('Removing database');
-    //   const collections = await removeRxDatabase(name, storage);
-    //   console.log('Removed database', collections);
   }
 
   const name = 'shoogydb';
-  const storage = getRxStorageLoki({
-    adapter: new PartitionedAsyncStorageAdapter(),
-    /*
-     * Do not set lokiJS persistence options like autoload and autosave,
-     * RxDB will pick proper defaults based on the given adapter
-     */
+  const storage = getRxStorageDexie({
+    // @ts-ignore
+    indexedDB,
+    IDBKeyRange,
   });
+
+  // if (__DEV__) {
+  //   console.log('Removing database');
+  //   const collections = await removeRxDatabase(name, storage);
+  //   console.log('Removed database', collections);
+  // }
 
   const db = await createRxDatabase({
     name,
+    // @ts-ignore
     storage,
     multiInstance: Platform.OS === 'web',
   });
   console.log('RxDB has been created');
-  await db.addCollections<DatabaseCollections>({
-    profiles: {
-      schema: profileSchema,
-    },
-  });
+  // @ts-ignore
+
+  await db.addCollections<DatabaseCollections>(collections);
   console.log('RxDB has been initialized');
 
   _db = db as unknown as Database;
@@ -58,9 +55,6 @@ export function useDb(): Database {
   if (_db) return _db;
   throw getDb;
 }
-
-type GetDocType<D extends keyof DatabaseCollections> =
-  DatabaseCollections[D] extends RxCollection<infer X> ? X : never;
 
 export function useObservableDoc<C extends keyof DatabaseCollections>(
   collection: C,
