@@ -8,6 +8,8 @@ import { Injection, InjectionParams } from '~/core/injection';
 import { Meal, MealParams } from '~/core/meal';
 import { getCombinedSugarPlot } from '~/core/sugarInfluence';
 import { incrementTick, tickResolution } from '~/core/time';
+import { useDb } from '~/core/db';
+import { throwIfNull } from '~/core/utils';
 
 export type Activity = ({ type: 'meal' } & MealParams) | ({ type: 'injection' } & InjectionParams);
 
@@ -19,7 +21,14 @@ type CombinedChartProps = {
 };
 
 export default function EditActivityChart({ activities$, startSugar$ }: CombinedChartProps) {
-  const plotInfo$ = useObservable(() =>
+  const db = useDb();
+  const profile$ = useObservable(() =>
+    db.states.profile_settings.selectedProfileId$.pipe(
+      throwIfNull(),
+      switchMap((id) => db.profiles.findOne(id).$.pipe(throwIfNull()))
+    )
+  );
+  const latestActivities$ = useObservable(() =>
     activities$.pipe(
       map((activities) =>
         activities.map((activity$) =>
@@ -35,16 +44,20 @@ export default function EditActivityChart({ activities$, startSugar$ }: Combined
         )
       ),
       switchMap((activities) => combineLatest(activities)),
-      combineLatestWith(startSugar$),
-      debounceTime(300),
-      map(([activities, startSugar]) => {
+      debounceTime(300)
+    )
+  );
+  const plotInfo$ = useObservable(() =>
+    latestActivities$.pipe(
+      combineLatestWith(startSugar$, profile$),
+      map(([activities, startSugar, profile]) => {
         const start = Math.min(...activities.map((activity) => activity.startTime));
         const end =
           Math.max(...activities.map((activity) => activity.startTime + activity.duration)) + 30;
         const xs = new Float64Array((end - start) / tickResolution).map((_, i) =>
           incrementTick(start, i)
         );
-        const activityPlot = getCombinedSugarPlot(xs, activities, startSugar);
+        const activityPlot = getCombinedSugarPlot(xs, activities, startSugar, profile);
         const markLine = getChartMarkers(activities);
 
         return { xs, ys: activityPlot.ys, markLine };

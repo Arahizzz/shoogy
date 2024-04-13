@@ -4,3 +4,7 @@ export interface Profile {
   insulinSensitivity: number;
   carbSensitivity: number;
 }
+
+export interface ProfileSettings {
+  selectedProfileId: string;
+}

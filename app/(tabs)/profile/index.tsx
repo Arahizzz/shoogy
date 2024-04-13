@@ -1,27 +1,34 @@
 import { ChevronRight } from '@tamagui/lucide-icons';
 import { Link } from 'expo-router';
 import { useObservableState } from 'observable-hooks/src';
-import { Button, Card, Text, View, YStack } from 'tamagui';
+import { Button, Card, RadioGroup, Text, View, YStack } from 'tamagui';
 
 import { useDb } from '~/core/db';
-import { Profile } from '~/core/models/profile';
-import { useEffect } from 'react';
+import { useObservablePickState } from 'observable-hooks';
 
 export default function ProfileScreen() {
   const db = useDb();
-  const profiles = db.profiles;
   const addProfile = async () => {
-    await profiles.insert({
+    await db.profiles.insert({
       id: 'p' + Date.now(),
       name: 'New Profile',
       carbSensitivity: 10,
       insulinSensitivity: 10,
     });
   };
-  const [profilesList] = useObservableState(() => profiles.find().$, []);
+  const selectProfile = (id: string) => {
+    return db.states.profile_settings.set('selectedProfileId', (_) => id);
+  };
+  const [profilesList] = useObservableState(() => db.profiles.find().$, []);
+  const [selectedProfile] = useObservableState(() => db.states.profile_settings.selectedProfileId$);
 
   return (
-    <YStack alignItems="center" gap={5} marginTop={10}>
+    <RadioGroup
+      value={selectedProfile}
+      onValueChange={selectProfile}
+      alignItems="center"
+      gap={5}
+      marginTop={10}>
       <Button onPress={addProfile}>
         <Text>New Profile</Text>
       </Button>
@@ -35,6 +42,9 @@ export default function ProfileScreen() {
           />
           <Card.Header flexDirection="row" justifyContent="space-between" alignItems="center">
             <View>
+              <RadioGroup.Item value={profile.id}>
+                <RadioGroup.Indicator />
+              </RadioGroup.Item>
               <Text color="black">{profile.name}</Text>
             </View>
             <Link href={{ pathname: '/(tabs)/profile/[id]', params: { id: profile.id } }} asChild>
@@ -46,6 +56,6 @@ export default function ProfileScreen() {
           </Card.Header>
         </Card>
       ))}
-    </YStack>
+    </RadioGroup>
   );
 }

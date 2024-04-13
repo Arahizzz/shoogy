@@ -3,8 +3,8 @@ import integrate from 'integrate-adaptive-simpson';
 
 import type { Activity } from '~/core/activity';
 import type { Axis } from '~/core/chart';
-import { CarbSensitivity } from '~/core/settings';
 import type { SugarInfluence } from '~/core/sugarInfluence';
+import { Profile } from '~/core/models/profile';
 
 export type MealParams = {
   carbsCount: number;
@@ -54,8 +54,8 @@ export class Meal implements Activity, SugarInfluence {
   getActivityDelta(from: number, to: number): number {
     return integrate(this.activityCurve, from, to, 0.1);
   }
-  getSugarDelta(from: number, to: number): number {
-    return CarbSensitivity * this.getActivityDelta(from, to);
+  getSugarDelta(from: number, to: number, profile: Profile): number {
+    return (profile.carbSensitivity / 10) * this.getActivityDelta(from, to);
   }
 
   public getActivityPlot(xs: Axis) {

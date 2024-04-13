@@ -1,7 +1,18 @@
 import { useObservableState } from 'observable-hooks';
-import { distinctUntilChanged, map, merge, Observable } from 'rxjs';
+import { distinctUntilChanged, map, merge, Observable, OperatorFunction, pipe } from 'rxjs';
 export function isDefined<T>(obj: T): obj is NonNullable<T> {
   return !!obj;
+}
+
+export function throwIfNull<T>(): OperatorFunction<T, NonNullable<T>> {
+  return pipe(
+    map((value) => {
+      if (!value) {
+        throw new Error('Value is null');
+      }
+      return value;
+    })
+  );
 }
 
 export function useStateFromObservable<T>(

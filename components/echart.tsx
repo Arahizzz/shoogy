@@ -1,4 +1,4 @@
-import { SVGRenderer, SkiaChart } from '@wuba/react-native-echarts';
+import { SVGRenderer, SvgChart } from '@wuba/react-native-echarts';
 import { EChartsOption } from 'echarts';
 import { LineChart, ScatterChart } from 'echarts/charts';
 import {
@@ -29,12 +29,12 @@ type Props = {
 };
 
 export default function EchartComponent(props: Props) {
-  const skiaRef = useRef<any>(null);
+  const ref = useRef<any>(null);
   const chart = useRef<echarts.ECharts | undefined>();
   const { width } = useWindowDimensions();
   useEffect(() => {
     if (!chart.current) {
-      chart.current = echarts.init(skiaRef.current, 'light', {
+      chart.current = echarts.init(ref.current, 'light', {
         renderer: 'svg',
         width,
         height: props.height,
@@ -49,5 +49,5 @@ export default function EchartComponent(props: Props) {
     chart.current?.setOption(options);
   });
 
-  return <SkiaChart ref={skiaRef} />;
+  return <SvgChart ref={ref} />;
 }

@@ -1,10 +1,10 @@
 import { csplineMonot } from 'algomatic';
 import type { Activity } from 'core/activity';
-import { InsulinSensitivity } from 'core/settings';
 import type { SugarInfluence } from 'core/sugarInfluence';
 import integrate from 'integrate-adaptive-simpson';
 
 import type { Axis } from './chart';
+import { Profile } from '~/core/models/profile';
 
 export type InsulinActivityLevel = {
   time: number;
@@ -38,8 +38,8 @@ export class Injection implements Activity, SugarInfluence {
   getActivityDelta(from: number, to: number): number {
     return integrate(this.activityCurve, from, to, 1e-5, 30);
   }
-  getSugarDelta(from: number, to: number): number {
-    return -InsulinSensitivity * this.getActivityDelta(from, to);
+  getSugarDelta(from: number, to: number, profile: Profile): number {
+    return -profile.insulinSensitivity * this.getActivityDelta(from, to);
   }
 
   private initActivityCurve() {
