@@ -17,6 +17,7 @@ import {
 } from '@tamagui/lucide-icons';
 import { IconProps } from '@tamagui/helpers-icon';
 import { useDb } from '~/core/db';
+import IndexActivityChart from '~/components/index-activity-chart';
 
 export default function CombinedScreen() {
   useSubscription(glucoseFetchWorker);
@@ -24,6 +25,7 @@ export default function CombinedScreen() {
   return (
     <YStack alignItems="center">
       <CurrentGlucose />
+      <IndexActivityChart />
       <Link href="/(tabs)/activities/edit" asChild>
         <Button maxWidth="250px">New Activity</Button>
       </Link>

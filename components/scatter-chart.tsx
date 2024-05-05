@@ -2,31 +2,31 @@ import type echarts from 'echarts';
 import { EChartsOption } from 'echarts';
 import { useObservable } from 'observable-hooks';
 import React from 'react';
-import { map, Observable } from 'rxjs';
+import { combineLatest, filter, map, Observable } from 'rxjs';
 import { View, YStack } from 'tamagui';
 
 import EchartComponent from './echart';
-
-import { HIGH_SUGAR, LOW_SUGAR } from '~/core/constants';
-import { tickToTime } from '~/core/time';
+import { isDefined } from '~/core/utils';
 
 type LineChartProps = {
   title?: string;
-  data$: Observable<{
-    xs: number[] | Float64Array;
-    ys: number[] | Float64Array;
-    markLine?: echarts.MarkLineComponentOption;
-  }>;
+  series: Observable<echarts.SeriesOption | undefined>[];
 };
-export default function ScatterChart({ title, data$ }: LineChartProps) {
+export default function ScatterChart({ title, series }: LineChartProps) {
+  const series$ = useObservable(() => combineLatest(series));
+
   const options$ = useObservable(() =>
-    data$.pipe(
-      map(({ xs, ys, markLine }) => {
-        const data = new Float64Array(xs.length * 2);
-        for (let i = 0; i < xs.length; i++) {
-          data[i * 2] = tickToTime(xs[i]);
-          data[i * 2 + 1] = ys[i];
-        }
+    series$.pipe(
+      map((series) => {
+        series = series.filter(isDefined);
+        const maxY = Math.ceil(
+          series
+            .flatMap((s) => [...(s.data as Float64Array)])
+            .reduce((acc, s, i) => {
+              if (i % 2 === 0) return acc;
+              return Math.max(acc, s);
+            }, 8)
+        );
 
         return {
           title: {
@@ -37,60 +37,9 @@ export default function ScatterChart({ title, data$ }: LineChartProps) {
           },
           yAxis: {
             min: 0,
-            // max: 15,
-            max: Math.max(8, Math.round(Math.max(...ys) + 2)),
+            max: maxY,
           },
-          series: [
-            {
-              data,
-              dimensions: ['time', 'value'],
-              type: 'scatter',
-              markLine,
-              tooltip: {
-                show: true,
-                triggerOn: 'mousemove|click',
-                trigger: 'item',
-                formatter: ({ value }) => {
-                  return (value as number).toFixed(1);
-                },
-              },
-              markPoint: {
-                data: [
-                  {
-                    type: 'max',
-                    name: 'max',
-                    label: {
-                      formatter: ({ value }) => {
-                        return (value as number).toFixed(1);
-                      },
-                      color: 'white',
-                    },
-                  },
-                  {
-                    type: 'min',
-                    name: 'min',
-                    label: {
-                      formatter: ({ value }) => {
-                        return (value as number).toFixed(1);
-                      },
-                      offset: [0, 10],
-                      color: 'white',
-                    },
-                    symbolRotate: 180,
-                  },
-                ],
-              },
-              symbolSize: 4,
-              itemStyle: {
-                color: ({ data }) => {
-                  const y = (data as number[])[1];
-                  if (y < LOW_SUGAR) return 'red';
-                  if (y > HIGH_SUGAR) return 'orange';
-                  return 'blue';
-                },
-              },
-            },
-          ],
+          series,
         } satisfies EChartsOption;
       })
     )
