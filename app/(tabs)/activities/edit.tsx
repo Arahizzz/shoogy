@@ -32,6 +32,7 @@ import { newId } from '~/core/utils';
 class ActivityStore {
   public activitiesState$ = new BehaviorSubject<BehaviorSubject<Activity>[]>([]);
   public startSugar$ = new BehaviorSubject(0);
+  private toDelete: { type: 'injection' | 'meal'; id: string }[] = [];
 
   async init() {
     const db = await getDb;
@@ -64,6 +65,7 @@ class ActivityStore {
   dispose() {
     this.activitiesState$.next([]);
     this.startSugar$.next(0);
+    this.toDelete = [];
   }
 
   newActivity(activityProps: Omit<Meal, 'id'> | Omit<Injection, 'id'>) {
@@ -73,7 +75,8 @@ class ActivityStore {
     });
     this.activitiesState$.next([...this.activitiesState$.value, activity$]);
   }
-  removeActivity(id: string) {
+  removeActivity(type: 'injection' | 'meal', id: string) {
+    this.toDelete.push({ type, id });
     this.activitiesState$.next(
       this.activitiesState$.value.filter((activity$) => activity$.value.id !== id)
     );
@@ -87,6 +90,16 @@ class ActivityStore {
       } else if (activity$.value.type === 'injection') {
         const injection = activity$.value as Injection;
         await db.injections.upsert(injection);
+      }
+    }
+
+    for (const { type, id } of this.toDelete) {
+      if (type === 'meal') {
+        const meal = await db.meals.findOne(id).exec();
+        if (meal) await meal.remove();
+      } else if (type === 'injection') {
+        const injection = await db.injections.findOne(id).exec();
+        if (injection) await injection.remove();
       }
     }
   }
@@ -151,18 +164,6 @@ export default function EditActivityScreen() {
   );
 }
 
-function StartSugarEdit() {
-  return (
-    <NumericInput
-      id="start-sugar"
-      initialValue={of(5)}
-      min={0}
-      step={0.1}
-      $changes={linkNext(store.startSugar$)}
-    />
-  );
-}
-
 function ActivitiesEdit() {
   const activities = useObservableState(store.activitiesState$);
 
@@ -183,7 +184,6 @@ function ActivitiesEdit() {
 
 function ActivityEdit({ activity$ }: { activity$: BehaviorSubject<Activity> }) {
   const { type } = useObservablePickState(activity$, activity$.value, 'type');
-  console.debug(activity$.value);
 
   return type === 'meal' ? (
     <MealEdit meal$={activity$ as BehaviorSubject<Meal>} />
@@ -216,7 +216,15 @@ function ActivityTimeEdit({
   );
 }
 
-function DeleteButton({ id, color }: { id: string; color?: string }) {
+function DeleteButton({
+  type,
+  id,
+  color,
+}: {
+  type: 'injection' | 'meal';
+  id: string;
+  color?: string;
+}) {
   return (
     <Button
       variant="outlined"
@@ -224,7 +232,7 @@ function DeleteButton({ id, color }: { id: string; color?: string }) {
       paddingHorizontal={5}
       height={40}
       $xs={{ height: 30 }}
-      onPress={() => store.removeActivity(id)}
+      onPress={() => store.removeActivity(type, id)}
       icon={<Trash2 color={color} size="$1" />}
     />
   );
@@ -244,7 +252,7 @@ function MealEdit({ meal$ }: { meal$: BehaviorSubject<Meal> }) {
       }}>
       <PizzaIcon />
       <XStack justifyContent="space-between">
-        <DeleteButton id={meal$.value.id} color={color} />
+        <DeleteButton type={'meal'} id={meal$.value.id} color={color} />
         <ActivityTimeEdit
           color={color}
           fontColor={fontColor}
@@ -335,7 +343,7 @@ function InsulinEdit({ insulin$ }: { insulin$: BehaviorSubject<Injection> }) {
     <ActivityEditCard backgroundColor="rgba(0, 106, 220, 0.25)">
       <SyringeIcon />
       <XStack>
-        <DeleteButton id={insulin$.value.id} color={color} />
+        <DeleteButton type={'injection'} id={insulin$.value.id} color={color} />
         <ActivityTimeEdit
           color={color}
           fontColor={fontColor}
