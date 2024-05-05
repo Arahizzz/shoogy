@@ -1,7 +1,7 @@
 import type echarts from 'echarts';
 
-import { Injection } from '~/core/injection';
-import { Meal } from '~/core/meal';
+import { InjectionCalculation } from '~/core/injectionCalculation';
+import { MealCalculation } from '~/core/mealCalculation';
 import { tickToTime } from '~/core/time';
 
 export type Axis = number[] | Float64Array;
@@ -11,12 +11,14 @@ export type Plot = {
   ys: Axis;
 };
 
-export function getChartMarkers(activities: (Meal | Injection)[]): echarts.MarkLineComponentOption {
+export function getChartMarkers(
+  activities: (MealCalculation | InjectionCalculation)[]
+): echarts.MarkLineComponentOption {
   return {
     symbol: ['none', 'circle'],
     symbolSize: 7,
     data: activities.map((activity) => {
-      if (activity instanceof Meal) {
+      if (activity instanceof MealCalculation) {
         return {
           name: 'Meal',
           xAxis: tickToTime(activity.startTime),

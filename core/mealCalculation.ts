@@ -1,29 +1,24 @@
 import { lerp } from 'algomatic';
 import integrate from 'integrate-adaptive-simpson';
 
-import type { Activity } from '~/core/activity';
+import type { Calculation } from '~/core/calculation';
 import type { Axis } from '~/core/chart';
 import type { SugarInfluence } from '~/core/sugarInfluence';
 import { Profile } from '~/core/models/profile';
+import { Meal, PopulatedMeal } from '~/core/models/meal';
 
-export type MealParams = {
-  carbsCount: number;
-  carbsAbsorptionRatePerHr: number;
-  startTime: number;
-};
-
-export class Meal implements Activity, SugarInfluence {
+export class MealCalculation implements Calculation, SugarInfluence {
   public readonly duration;
   private readonly activityCurve;
   public carbsCount: number;
   public carbsAbsorptionRatePerHr: number;
   public startTime: number;
 
-  constructor({ carbsCount, carbsAbsorptionRatePerHr, startTime }: MealParams) {
+  constructor({ carbsCount, mealType, startTick }: PopulatedMeal) {
     this.carbsCount = carbsCount;
-    this.carbsAbsorptionRatePerHr = carbsAbsorptionRatePerHr;
-    this.startTime = startTime;
-    const carbsAbsorptionRatePerMin = carbsAbsorptionRatePerHr / 60;
+    this.carbsAbsorptionRatePerHr = mealType.carbsAbsorptionRatePerHr;
+    this.startTime = startTick;
+    const carbsAbsorptionRatePerMin = this.carbsAbsorptionRatePerHr / 60;
     this.duration = Math.max(carbsCount / carbsAbsorptionRatePerMin, 30);
     this.activityCurve = this.initActivityCurve();
   }

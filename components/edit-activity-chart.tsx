@@ -4,16 +4,18 @@ import { match } from 'ts-pattern';
 
 import ScatterChart from '~/components/scatter-chart';
 import { getChartMarkers } from '~/core/chart';
-import { Injection, InjectionParams } from '~/core/injection';
-import { Meal, MealParams } from '~/core/meal';
+import { useDb } from '~/core/db';
+import { InjectionCalculation } from '~/core/injectionCalculation';
+import { MealCalculation } from '~/core/mealCalculation';
+import { Activity, PopulatedActivity } from '~/core/models/activity';
+import { PopulatedInjection } from '~/core/models/injection';
+import { PopulatedMeal } from '~/core/models/meal';
 import { getCombinedSugarPlot } from '~/core/sugarInfluence';
 import { incrementTick, tickResolution } from '~/core/time';
-import { useDb } from '~/core/db';
 import { throwIfNull } from '~/core/utils';
+import { Profile } from '~/core/models/profile';
 
-export type Activity = ({ type: 'meal' } & MealParams) | ({ type: 'injection' } & InjectionParams);
-
-type ActivityFunction = Meal | Injection;
+type ActivityFunction = MealCalculation | InjectionCalculation;
 
 type CombinedChartProps = {
   activities$: Observable<Observable<Activity>[]>;
@@ -22,6 +24,49 @@ type CombinedChartProps = {
 
 export default function EditActivityChart({ activities$, startSugar$ }: CombinedChartProps) {
   const db = useDb();
+
+  const populateActivity = (activity: Activity): Observable<PopulatedActivity> => {
+    return match(activity)
+      .returnType<Observable<PopulatedActivity>>()
+      .with({ type: 'meal' }, (meal): Observable<PopulatedMeal> => {
+        return db.meal_types.findOne(meal.mealType).$.pipe(
+          throwIfNull(),
+          map((mealType) => ({ ...meal, mealType }))
+        );
+      })
+      .with({ type: 'injection' }, (injection): Observable<PopulatedInjection> => {
+        return db.insulin_types.findOne(injection.insulinType).$.pipe(
+          throwIfNull(),
+          map((insulinType) => ({ ...injection, insulinType }))
+        );
+      })
+      .exhaustive();
+  };
+  const initializeCalculation = (populatedActivity: PopulatedActivity): ActivityFunction => {
+    return match(populatedActivity)
+      .returnType<ActivityFunction>()
+      .with({ type: 'meal' }, (meal) => new MealCalculation(meal))
+      .with({ type: 'injection' }, (injection) => new InjectionCalculation(injection))
+      .exhaustive();
+  };
+  const calculatePlotData = (
+    activities: ActivityFunction[],
+    startSugar: number,
+    profile: Profile
+  ) => {
+    const start = Math.min(...activities.map((activity) => activity.startTime));
+    const end =
+      Math.max(...activities.map((activity) => activity.startTime + activity.duration)) + 30;
+    const xs = new Float64Array((end - start) / tickResolution).map((_, i) =>
+      incrementTick(start, i)
+    );
+    const activityPlot = getCombinedSugarPlot(xs, activities, startSugar, profile);
+    const markLine = getChartMarkers(activities);
+
+    return { xs, ys: activityPlot.ys, markLine };
+  };
+
+  // Reactive pipeline
   const profile$ = useObservable(() =>
     db.states.profile_settings.selectedProfileId$.pipe(
       throwIfNull(),
@@ -32,15 +77,7 @@ export default function EditActivityChart({ activities$, startSugar$ }: Combined
     activities$.pipe(
       map((activities) =>
         activities.map((activity$) =>
-          activity$.pipe(
-            map((activity) => {
-              return match(activity)
-                .returnType<ActivityFunction>()
-                .with({ type: 'meal' }, (meal) => new Meal(meal))
-                .with({ type: 'injection' }, (injection) => new Injection(injection))
-                .exhaustive();
-            })
-          )
+          activity$.pipe(switchMap(populateActivity), map(initializeCalculation))
         )
       ),
       switchMap((activities) => combineLatest(activities)),
@@ -51,16 +88,7 @@ export default function EditActivityChart({ activities$, startSugar$ }: Combined
     latestActivities$.pipe(
       combineLatestWith(startSugar$, profile$),
       map(([activities, startSugar, profile]) => {
-        const start = Math.min(...activities.map((activity) => activity.startTime));
-        const end =
-          Math.max(...activities.map((activity) => activity.startTime + activity.duration)) + 30;
-        const xs = new Float64Array((end - start) / tickResolution).map((_, i) =>
-          incrementTick(start, i)
-        );
-        const activityPlot = getCombinedSugarPlot(xs, activities, startSugar, profile);
-        const markLine = getChartMarkers(activities);
-
-        return { xs, ys: activityPlot.ys, markLine };
+        return calculatePlotData(activities, startSugar, profile);
       })
     )
   );

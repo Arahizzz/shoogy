@@ -2,7 +2,7 @@ import { of } from 'rxjs';
 import { Stack } from 'tamagui';
 
 import ScatterChart from '~/components/scatter-chart';
-import { Meal } from '~/core/meal';
+import { MealCalculation } from '~/core/mealCalculation';
 import { getCurrentTick, incrementTick } from '~/core/time';
 
 export default function FoodScreen() {
@@ -10,10 +10,10 @@ export default function FoodScreen() {
   const xs = new Float64Array(32).map((_, i) => incrementTick(now, i));
 
   // Data for the chart
-  const pasta = new Meal({
+  const pasta = new MealCalculation({
     carbsCount: 100,
     carbsAbsorptionRatePerHr: 40,
-    startTime: now,
+    startTick: now,
   });
   const activityPlot = pasta.getActivityPlot(xs);
   const cobPlot = pasta.getObPlot(xs);

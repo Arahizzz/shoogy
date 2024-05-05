@@ -1,6 +1,6 @@
 import type { Axis } from '~/core/chart.js';
 
-export interface Activity {
+export interface Calculation {
   get startTime(): number;
   get duration(): number;
 

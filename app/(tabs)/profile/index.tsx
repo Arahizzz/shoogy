@@ -14,6 +14,7 @@ export default function ProfileScreen() {
       name: 'New Profile',
       carbSensitivity: 10,
       insulinSensitivity: 10,
+      insulinType: 'Apidra',
     });
   };
   const selectProfile = (id: string) => {

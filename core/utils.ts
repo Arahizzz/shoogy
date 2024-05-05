@@ -4,6 +4,10 @@ export function isDefined<T>(obj: T): obj is NonNullable<T> {
   return !!obj;
 }
 
+export function newId(): string {
+  return 'p' + Date.now();
+}
+
 export function throwIfNull<T>(): OperatorFunction<T, NonNullable<T>> {
   return pipe(
     map((value) => {

@@ -1,34 +1,24 @@
 import { csplineMonot } from 'algomatic';
-import type { Activity } from 'core/activity';
+import type { Calculation } from '~/core/calculation';
 import type { SugarInfluence } from 'core/sugarInfluence';
 import integrate from 'integrate-adaptive-simpson';
 
 import type { Axis } from './chart';
 import { Profile } from '~/core/models/profile';
+import { ActivityPoints, PopulatedInjection } from './models/injection';
 
-export type InsulinActivityLevel = {
-  time: number;
-  value: number;
-};
-
-export type InjectionParams = {
-  activity: InsulinActivityLevel[];
-  insulinAmount: number;
-  startTime: number;
-};
-
-export class Injection implements Activity, SugarInfluence {
-  public readonly activity: InsulinActivityLevel[];
+export class InjectionCalculation implements Calculation, SugarInfluence {
+  public readonly activity: ActivityPoints[];
   public readonly insulinAmount: number;
   public readonly startTime: number;
   public readonly duration;
   private readonly activityCurve;
 
-  constructor({ activity, insulinAmount, startTime }: InjectionParams) {
-    this.activity = activity;
+  constructor({ insulinType, insulinAmount, startTick }: PopulatedInjection) {
+    this.activity = insulinType.points;
     this.insulinAmount = insulinAmount;
-    this.startTime = startTime;
-    this.duration = activity[activity.length - 1].time;
+    this.startTime = startTick;
+    this.duration = this.activity[this.activity.length - 1].time;
     this.activityCurve = this.initActivityCurve();
   }
 
@@ -66,12 +56,3 @@ export class Injection implements Activity, SugarInfluence {
     return { xs, ys };
   }
 }
-
-export const Apidra: InsulinActivityLevel[] = [
-  { time: 0, value: 0.0 },
-  { time: 30, value: 0.5 },
-  { time: 60, value: 0.99 },
-  { time: 90, value: 0.6 },
-  { time: 120, value: 0.2 },
-  { time: 240, value: 0.0 },
-];
