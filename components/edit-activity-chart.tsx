@@ -11,7 +11,7 @@ import { Activity, PopulatedActivity } from '~/core/models/activity';
 import { PopulatedInjection } from '~/core/models/injection';
 import { PopulatedMeal } from '~/core/models/meal';
 import { getCombinedSugarPlot } from '~/core/sugarInfluence';
-import { incrementTick, tickResolution } from '~/core/time';
+import { incrementTick, tickResolutionMinutes } from '~/core/time';
 import { throwIfNull } from '~/core/utils';
 import { Profile } from '~/core/models/profile';
 
@@ -54,12 +54,10 @@ export default function EditActivityChart({ activities$, startSugar$ }: Combined
     startSugar: number,
     profile: Profile
   ) => {
-    const start = Math.min(...activities.map((activity) => activity.startTime));
-    const end =
-      Math.max(...activities.map((activity) => activity.startTime + activity.duration)) + 30;
-    const xs = new Float64Array((end - start) / tickResolution).map((_, i) =>
-      incrementTick(start, i)
-    );
+    const startTick = Math.min(...activities.map((activity) => activity.startTick));
+    const endTick =
+      Math.max(...activities.map((activity) => activity.startTick + activity.durationTicks)) + 6;
+    const xs = new Float64Array(endTick - startTick).map((_, i) => incrementTick(startTick, i));
     const activityPlot = getCombinedSugarPlot(xs, activities, startSugar, profile);
     const markLine = getChartMarkers(activities);
 

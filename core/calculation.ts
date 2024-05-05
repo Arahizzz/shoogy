@@ -1,11 +1,11 @@
 import type { Axis } from '~/core/chart.js';
 
 export interface Calculation {
-  get startTime(): number;
-  get duration(): number;
+  get startTick(): number;
+  get durationTicks(): number;
 
-  getActivityLevel(time: number): number;
-  getActivityDelta(from: number, to: number): number;
+  getActivityLevel(tick: number): number;
+  getActivityDelta(fromTick: number, toTick: number): number;
 
   getActivityPlot(xs: Axis): { xs: Axis; ys: Axis };
   getObPlot(xs: Axis): { xs: Axis; ys: Axis };

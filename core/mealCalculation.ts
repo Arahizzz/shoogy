@@ -8,33 +8,32 @@ import { Profile } from '~/core/models/profile';
 import { Meal, PopulatedMeal } from '~/core/models/meal';
 
 export class MealCalculation implements Calculation, SugarInfluence {
-  public readonly duration;
+  public readonly durationTicks;
   private readonly activityCurve;
   public carbsCount: number;
-  public carbsAbsorptionRatePerHr: number;
-  public startTime: number;
+  public carbsAbsorptionRatePerTick: number;
+  public startTick: number;
 
   constructor({ carbsCount, mealType, startTick }: PopulatedMeal) {
     this.carbsCount = carbsCount;
-    this.carbsAbsorptionRatePerHr = mealType.carbsAbsorptionRatePerHr;
-    this.startTime = startTick;
-    const carbsAbsorptionRatePerMin = this.carbsAbsorptionRatePerHr / 60;
-    this.duration = Math.max(carbsCount / carbsAbsorptionRatePerMin, 30);
+    this.carbsAbsorptionRatePerTick = (mealType.carbsAbsorptionRatePerHr / 60) * 5;
+    this.startTick = startTick;
+    this.durationTicks = Math.max(carbsCount / this.carbsAbsorptionRatePerTick, 6);
     this.activityCurve = this.initActivityCurve();
   }
 
   private initActivityCurve() {
-    const easingInterval = 15;
+    const easingInterval = 3;
     const xs = [
-      this.startTime,
-      this.startTime + easingInterval,
-      this.startTime + this.duration - easingInterval,
-      this.startTime + this.duration,
+      this.startTick,
+      this.startTick + easingInterval,
+      this.startTick + this.durationTicks - easingInterval,
+      this.startTick + this.durationTicks,
     ];
     let ys = [0, 1, 1, 0];
 
     const f = lerp(xs, ys);
-    const area = integrate(f, this.startTime, this.startTime + this.duration, 0.1);
+    const area = integrate(f, this.startTick, this.startTick + this.durationTicks, 0.1);
 
     // Normalize the area under the curve to be equal to the carbs count
     ys = ys.map((y) => (y / area) * this.carbsCount);
@@ -59,7 +58,7 @@ export class MealCalculation implements Calculation, SugarInfluence {
   }
 
   public getObPlot(xs: Axis) {
-    const ys = xs.map((x) => this.carbsCount - this.getActivityDelta(this.startTime, x));
+    const ys = xs.map((x) => this.carbsCount - this.getActivityDelta(this.startTick, x));
     return { xs, ys };
   }
 }

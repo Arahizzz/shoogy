@@ -9,7 +9,7 @@ export type Injection = {
 };
 
 export type ActivityPoints = {
-  time: number;
+  tick: number;
   value: number;
 };
 
@@ -25,12 +25,12 @@ export const Apidra: InsulinType = {
   id: 'Apidra',
   name: 'Apidra',
   points: [
-    { time: 0, value: 0.0 },
-    { time: 30, value: 0.5 },
-    { time: 60, value: 0.99 },
-    { time: 90, value: 0.6 },
-    { time: 120, value: 0.2 },
-    { time: 240, value: 0.0 },
+    { tick: 0, value: 0.0 },
+    { tick: 6, value: 0.5 },
+    { tick: 12, value: 0.99 },
+    { tick: 18, value: 0.6 },
+    { tick: 24, value: 0.2 },
+    { tick: 48, value: 0.0 },
   ],
 };
 
@@ -52,7 +52,7 @@ export const insulinTypeSchema: RxJsonSchema<InsulinType> = {
       items: {
         type: 'object',
         properties: {
-          time: { type: 'number' },
+          tick: { type: 'number' },
           value: { type: 'number' },
         },
         required: ['time', 'value'],

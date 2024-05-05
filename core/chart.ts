@@ -21,7 +21,7 @@ export function getChartMarkers(
       if (activity instanceof MealCalculation) {
         return {
           name: 'Meal',
-          xAxis: tickToTime(activity.startTime),
+          xAxis: tickToTime(activity.startTick),
           label: {
             formatter: `${activity.carbsCount}g`,
             distance: 20,
@@ -37,7 +37,7 @@ export function getChartMarkers(
       } else {
         return {
           name: 'Injection',
-          xAxis: tickToTime(activity.startTime),
+          xAxis: tickToTime(activity.startTick),
           label: {
             formatter: `${activity.insulinAmount}U`,
             color: 'hsl(208, 100%, 47.3%)',

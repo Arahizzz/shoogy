@@ -41,19 +41,19 @@ class ActivityStore {
     const meals = await db.meals
       .find({
         selector: {
-          startTime: { $gte: twelveHoursAgo },
+          startTick: { $gte: twelveHoursAgo },
         },
       })
       .exec();
     const injections = await db.injections
       .find({
         selector: {
-          startTime: { $gte: twelveHoursAgo },
+          startTick: { $gte: twelveHoursAgo },
         },
       })
       .exec();
     const activities = [...meals, ...injections]
-      .sort((a, b) => a.startTime - b.startTime)
+      .sort((a, b) => a.startTick - b.startTick)
       .map(
         (activity) => new BehaviorSubject(activity._data)
       ) as unknown as BehaviorSubject<Activity>[];
@@ -208,8 +208,8 @@ function ActivityTimeEdit({
       id="time"
       initialValue={of(activity$.value.startTick)}
       $changes={{
-        next: (startTime: number) => {
-          activity$.next({ ...activity$.value, startTime });
+        next: (startTick: number) => {
+          activity$.next({ ...activity$.value, startTick });
         },
       }}
     />
