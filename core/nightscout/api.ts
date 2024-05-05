@@ -11,7 +11,7 @@ const jwt = fromFetch(`${apiBase}/v2/authorization/request/{API-KEY}`, {
   selector: (response: Response) => response.json(),
 }).pipe(map((jwt: { token: string }) => jwt.token));
 
-export const fetchBloodGlucose = (startDate: number, endDate: number) =>
+export const fetchBloodGlucose = (startDate: number, endDate: number, limit = 100) =>
   jwt.pipe(
     switchMap((token) =>
       fromFetch(
@@ -48,15 +48,14 @@ export const fetchBloodGlucoseUntilDate = (startDate: number, endDate: number) =
     new Date(startDate).toISOString(),
     new Date(endDate).toISOString()
   );
-  return fetchBloodGlucose(startDate, endDate).pipe(
+  return fetchBloodGlucose(startDate, endDate, 10).pipe(
     expand((data) => {
       if (!data.length) return EMPTY;
       const endDateSliding = data[data.length - 1].date;
       if (endDateSliding < startDate) return EMPTY;
       console.log('fetchBloodGlucoseUntilDate', new Date(endDateSliding).toISOString());
       return fetchBloodGlucose(startDate, endDateSliding);
-    }),
-    reduce((acc, data) => acc.concat(data), new Array<GlucoseEntry>(0))
+    })
   );
 };
 
