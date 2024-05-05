@@ -1,37 +1,26 @@
-import { RxCollection, type RxCollectionCreator, RxJsonSchema, RxState } from 'rxdb/src/types';
+import { RxCollection, type RxCollectionCreator, RxState } from 'rxdb/src/types';
 
-import { Profile, ProfileSettings } from '~/core/models/profile';
-
-const profileSchema: RxJsonSchema<Profile> = {
-  title: 'Profile',
-  version: 0,
-  description: "Collection of user's individual parameters",
-  type: 'object',
-  properties: {
-    id: {
-      type: 'string',
-      maxLength: 36, // <- the primary key must have set maxLength
-    },
-    name: {
-      type: 'string',
-    },
-    insulinSensitivity: {
-      type: 'number',
-    },
-    carbSensitivity: {
-      type: 'number',
-    },
-  },
-  primaryKey: 'id',
-  required: ['id', 'name', 'insulinSensitivity', 'carbSensitivity'],
-};
+import { Profile, profileSchema, ProfileSettings } from '~/core/models/profile';
+import {
+  Injection,
+  injectionSchema,
+  InsulinType,
+  insulinTypeSchema,
+} from '~/core/models/injection';
+import { Meal, mealSchema, MealType, mealTypeSchema } from '~/core/models/meal';
+import { GlucoseEntry, glucoseEntrySchema } from '~/core/models/glucoseEntry';
 
 export type DatabaseCollections = {
   profiles: RxCollection<Profile>;
+  insulin_types: RxCollection<InsulinType>;
+  injections: RxCollection<Injection>;
+  meal_types: RxCollection<MealType>;
+  meals: RxCollection<Meal>;
+  glucose_entries: RxCollection<GlucoseEntry>;
 };
 
 export type DatabaseStates = {
-  ['profile_settings']: RxState<ProfileSettings>;
+  profile_settings: RxState<ProfileSettings>;
 };
 
 export type GetCollectionType<D extends keyof DatabaseCollections> =
@@ -52,6 +41,23 @@ export const collections: {
   profiles: {
     schema: profileSchema,
   },
+  insulin_types: {
+    schema: insulinTypeSchema,
+  },
+  injections: {
+    schema: injectionSchema,
+  },
+  meal_types: {
+    schema: mealTypeSchema,
+  },
+  meals: {
+    schema: mealSchema,
+  },
+  glucose_entries: {
+    schema: glucoseEntrySchema,
+  },
 };
 
-export const states: (keyof DatabaseStates)[] = ['profile_settings'];
+export const states: Record<keyof DatabaseStates, string> = {
+  profile_settings: 'profile_settings',
+};

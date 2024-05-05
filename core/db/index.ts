@@ -1,6 +1,6 @@
 import { useObservable } from 'observable-hooks';
 import { Platform } from 'react-native';
-import { createRxDatabase, addRxPlugin } from 'rxdb';
+import { addRxPlugin, createRxDatabase } from 'rxdb';
 import { disableWarnings, RxDBDevModePlugin } from 'rxdb/plugins/dev-mode';
 import { getRxStorageDexie } from 'rxdb/src/plugins/storage-dexie';
 import { type MangoQueryNoLimit, RxDatabase, RxDocument } from 'rxdb/src/types';
@@ -16,6 +16,9 @@ import {
 import { IDBKeyRange, indexedDB } from '~/core/db/indexdb';
 import { throwIfNull } from '~/core/utils';
 import { RxDBStatePlugin } from 'rxdb/plugins/state';
+import { Apidra } from '~/core/models/injection';
+import { mealTypes } from '~/core/models/meal';
+import { defaultProfile } from '~/core/models/profile';
 
 if (__DEV__) {
   disableWarnings();
@@ -33,6 +36,14 @@ export type Database = RxDatabase<
 
 let _db: Database | null = null;
 
+const seedData = async (db: Database) => {
+  await db.insulin_types.upsert(Apidra);
+  await db.meal_types.bulkUpsert(mealTypes);
+  await db.profiles.upsert(defaultProfile);
+
+  await db.states.profile_settings.set('selectedProfileId', (_) => defaultProfile.id);
+};
+
 export const getDb = (async () => {
   const name = 'shoogydb';
   const storage = getRxStorageDexie({
@@ -41,11 +52,12 @@ export const getDb = (async () => {
     IDBKeyRange,
   });
 
-  // if (__DEV__) {
-  //   console.log('Removing database');
-  //   const collections = await removeRxDatabase(name, storage);
-  //   console.log('Removed database', collections);
-  // }
+  if (__DEV__) {
+    const { removeRxDatabase } = require('rxdb');
+    console.log('Removing database');
+    const collections = await removeRxDatabase(name, storage);
+    console.log('Removed database', collections);
+  }
 
   const db = await createRxDatabase({
     name,
@@ -58,11 +70,14 @@ export const getDb = (async () => {
   await db.addCollections<DatabaseCollections>(collections);
   console.log('RxDB has been initialized');
 
-  for (const state of states) {
+  for (const state of Object.values(states)) {
     await db.addState(state);
   }
 
   _db = db as unknown as Database;
+
+  await seedData(_db);
+
   return _db;
 })();
 
