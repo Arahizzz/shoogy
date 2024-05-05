@@ -46,6 +46,14 @@ export default function ScatterChart({ title, data$ }: LineChartProps) {
               dimensions: ['time', 'value'],
               type: 'scatter',
               markLine,
+              tooltip: {
+                show: true,
+                triggerOn: 'mousemove|click',
+                trigger: 'item',
+                formatter: ({ value }) => {
+                  return (value as number).toFixed(1);
+                },
+              },
               markPoint: {
                 data: [
                   {
@@ -78,7 +86,7 @@ export default function ScatterChart({ title, data$ }: LineChartProps) {
                   const y = (data as number[])[1];
                   if (y < LOW_SUGAR) return 'red';
                   if (y > HIGH_SUGAR) return 'orange';
-                  return 'CadetBlue';
+                  return 'blue';
                 },
               },
             },

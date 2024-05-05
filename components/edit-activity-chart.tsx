@@ -1,5 +1,13 @@
 import { useObservable } from 'observable-hooks';
-import { combineLatest, combineLatestWith, debounceTime, map, Observable, switchMap } from 'rxjs';
+import {
+  combineLatest,
+  combineLatestWith,
+  debounceTime,
+  filter,
+  map,
+  Observable,
+  switchMap,
+} from 'rxjs';
 import { match } from 'ts-pattern';
 
 import ScatterChart from '~/components/scatter-chart';
@@ -12,8 +20,9 @@ import { PopulatedInjection } from '~/core/models/injection';
 import { PopulatedMeal } from '~/core/models/meal';
 import { getCombinedSugarPlot } from '~/core/sugarInfluence';
 import { incrementTick, tickResolutionMinutes } from '~/core/time';
-import { throwIfNull } from '~/core/utils';
+import { isDefined, throwIfNull } from '~/core/utils';
 import { Profile } from '~/core/models/profile';
+import { GlucoseEntry } from '~/core/models/glucoseEntry';
 
 type ActivityFunction = MealCalculation | InjectionCalculation;
 
@@ -22,7 +31,7 @@ type CombinedChartProps = {
   startSugar$: Observable<number>;
 };
 
-export default function EditActivityChart({ activities$, startSugar$ }: CombinedChartProps) {
+export default function EditActivityChart({ activities$ }: CombinedChartProps) {
   const db = useDb();
 
   const populateActivity = (activity: Activity): Observable<PopulatedActivity> => {
@@ -51,14 +60,14 @@ export default function EditActivityChart({ activities$, startSugar$ }: Combined
   };
   const calculatePlotData = (
     activities: ActivityFunction[],
-    startSugar: number,
+    startSugar: GlucoseEntry,
     profile: Profile
   ) => {
-    const startTick = Math.min(...activities.map((activity) => activity.startTick));
+    const startTick = startSugar.tick;
     const endTick =
       Math.max(...activities.map((activity) => activity.startTick + activity.durationTicks)) + 6;
     const xs = new Float64Array(endTick - startTick).map((_, i) => incrementTick(startTick, i));
-    const activityPlot = getCombinedSugarPlot(xs, activities, startSugar, profile);
+    const activityPlot = getCombinedSugarPlot(xs, activities, startSugar.sugar, profile);
     const markLine = getChartMarkers(activities);
 
     return { xs, ys: activityPlot.ys, markLine };
@@ -70,6 +79,13 @@ export default function EditActivityChart({ activities$, startSugar$ }: Combined
       throwIfNull(),
       switchMap((id) => db.profiles.findOne(id).$.pipe(throwIfNull()))
     )
+  );
+  const currentSugar$ = useObservable(() =>
+    db.glucose_entries
+      .findOne({
+        sort: [{ date: 'desc' }],
+      })
+      .$.pipe(filter(isDefined))
   );
   const latestActivities$ = useObservable(() =>
     activities$.pipe(
@@ -84,9 +100,9 @@ export default function EditActivityChart({ activities$, startSugar$ }: Combined
   );
   const plotInfo$ = useObservable(() =>
     latestActivities$.pipe(
-      combineLatestWith(startSugar$, profile$),
+      combineLatestWith(currentSugar$, profile$),
       map(([activities, startSugar, profile]) => {
-        return calculatePlotData(activities, startSugar, profile);
+        return calculatePlotData(activities, startSugar._data, profile);
       })
     )
   );

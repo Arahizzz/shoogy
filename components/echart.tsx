@@ -1,4 +1,4 @@
-import { SVGRenderer, SvgChart } from '@wuba/react-native-echarts';
+import { SkiaChart } from '@wuba/react-native-echarts';
 import { EChartsOption } from 'echarts';
 import { LineChart, ScatterChart } from 'echarts/charts';
 import {
@@ -6,21 +6,24 @@ import {
   MarkLineComponent,
   MarkPointComponent,
   TitleComponent,
+  TooltipComponent,
 } from 'echarts/components';
 import * as echarts from 'echarts/core';
 import { useSubscription } from 'observable-hooks';
-import React, { useRef, useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useWindowDimensions } from 'react-native';
 import { Observable } from 'rxjs';
+import { CanvasRenderer } from 'echarts/renderers';
 
 echarts.use([
-  SVGRenderer,
+  CanvasRenderer,
   LineChart,
   GridComponent,
   ScatterChart,
   MarkPointComponent,
   MarkLineComponent,
   TitleComponent,
+  TooltipComponent,
 ]);
 
 type Props = {
@@ -35,7 +38,7 @@ export default function EchartComponent(props: Props) {
   useEffect(() => {
     if (!chart.current) {
       chart.current = echarts.init(ref.current, 'light', {
-        renderer: 'svg',
+        renderer: 'canvas',
         width,
         height: props.height,
       });
@@ -49,5 +52,5 @@ export default function EchartComponent(props: Props) {
     chart.current?.setOption(options);
   });
 
-  return <SvgChart ref={ref} />;
+  return <SkiaChart ref={ref} />;
 }
