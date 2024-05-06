@@ -23,7 +23,7 @@ import { incrementTick, tickResolutionMinutes } from '~/core/time';
 import { isDefined, throwIfNull } from '~/core/utils';
 import { Profile } from '~/core/models/profile';
 import { GlucoseEntry } from '~/core/models/glucoseEntry';
-import { prognosisSeries } from '~/core/chart/series';
+import { editScreenSeries, SeriesProps } from '~/core/chart/series';
 
 type ActivityFunction = MealCalculation | InjectionCalculation;
 
@@ -68,9 +68,9 @@ export default function EditActivityChart({ activities$ }: CombinedChartProps) {
       Math.max(...activities.map((activity) => activity.startTick + activity.durationTicks)) + 6;
     const xs = new Float64Array(endTick - startTick).map((_, i) => incrementTick(startTick, i));
     const activityPlot = getCombinedSugarPlot(xs, activities, startSugar.sugar, profile);
-    const markLine = getChartMarkers(activities);
+    const markLineData = getChartMarkers(activities);
 
-    return { xs, ys: activityPlot.ys, markLine };
+    return { xs, ys: activityPlot.ys, markLineData } satisfies SeriesProps;
   };
 
   // Reactive pipeline
@@ -104,7 +104,7 @@ export default function EditActivityChart({ activities$ }: CombinedChartProps) {
       map(([activities, startSugar, profile]) => {
         return calculatePlotData(activities, startSugar._data, profile);
       }),
-      map((data) => prognosisSeries(data))
+      map((data) => editScreenSeries(data))
     )
   );
 

@@ -2,6 +2,7 @@ import { SkiaChart } from '@wuba/react-native-echarts';
 import { EChartsOption } from 'echarts';
 import { LineChart, ScatterChart } from 'echarts/charts';
 import {
+  DataZoomComponent,
   GridComponent,
   MarkLineComponent,
   MarkPointComponent,
@@ -14,6 +15,7 @@ import React, { useEffect, useRef } from 'react';
 import { useWindowDimensions } from 'react-native';
 import { Observable } from 'rxjs';
 import { CanvasRenderer } from 'echarts/renderers';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 echarts.use([
   CanvasRenderer,
@@ -24,6 +26,7 @@ echarts.use([
   MarkLineComponent,
   TitleComponent,
   TooltipComponent,
+  DataZoomComponent,
 ]);
 
 type Props = {
@@ -52,5 +55,9 @@ export default function EchartComponent(props: Props) {
     chart.current?.setOption(options);
   });
 
-  return <SkiaChart ref={ref} />;
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SkiaChart useRNGH ref={ref} />
+    </GestureHandlerRootView>
+  );
 }

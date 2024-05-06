@@ -1,11 +1,10 @@
 import { useObservable } from 'observable-hooks';
 import {
   combineLatest,
-  combineLatestAll,
   combineLatestWith,
-  concatAll,
   debounceTime,
   filter,
+  first,
   map,
   Observable,
   startWith,
@@ -25,10 +24,14 @@ import { PopulatedInjection } from '~/core/models/injection';
 import { PopulatedMeal } from '~/core/models/meal';
 import { getCombinedSugarPlot } from '~/core/sugarInfluence';
 import { incrementTick, timeToTick } from '~/core/time';
-import { throwIfNull } from '~/core/utils';
+import { isDefined, throwIfNull } from '~/core/utils';
 import { Profile } from '~/core/models/profile';
 import { GlucoseEntry } from '~/core/models/glucoseEntry';
-import { prognosisSeries } from '~/core/chart/series';
+import {
+  indexScreenCurrentSeries,
+  indexScreenPrognosisSeries,
+  SeriesProps,
+} from '~/core/chart/series';
 
 type ActivityFunction = MealCalculation | InjectionCalculation;
 
@@ -63,16 +66,16 @@ export default function IndexActivityChart() {
     activities: ActivityFunction[],
     startSugar: GlucoseEntry,
     profile: Profile
-  ) => {
+  ): SeriesProps => {
     console.log(activities, startSugar, profile);
     const startTick = startSugar.tick;
     const endTick =
       Math.max(...activities.map((activity) => activity.startTick + activity.durationTicks)) + 6;
     const xs = new Float64Array(endTick - startTick).map((_, i) => incrementTick(startTick, i));
     const activityPlot = getCombinedSugarPlot(xs, activities, startSugar.sugar, profile);
-    const markLine = getChartMarkers(activities);
+    const markLineData = getChartMarkers(activities);
 
-    return { xs, ys: activityPlot.ys, markLine };
+    return { xs, ys: activityPlot.ys, markLineData };
   };
 
   // Reactive pipeline
@@ -130,7 +133,7 @@ export default function IndexActivityChart() {
       map(([activities, latestSugar, profile]) => {
         return calculatePrediction(activities, latestSugar[latestSugar.length - 1]._data, profile);
       }),
-      map((data) => prognosisSeries(data)),
+      map((data) => indexScreenPrognosisSeries(data)),
       startWith(undefined)
     )
   );
@@ -140,12 +143,32 @@ export default function IndexActivityChart() {
         return {
           xs: new Float64Array(sugars.length).map((_, i) => sugars[i].tick),
           ys: new Float64Array(sugars.length).map((_, i) => sugars[i].sugar),
-        };
+          markLineData: [],
+        } satisfies SeriesProps;
       }),
-      map((data) => prognosisSeries(data)),
+      map((data) => indexScreenCurrentSeries(data)),
       startWith(undefined)
     )
   );
+  const dataZoom$ = useObservable(() =>
+    latestSugar$.pipe(
+      filter((sugars) => sugars.length > 0),
+      map((sugars) => {
+        return [
+          {
+            type: 'inside',
+            start: 60,
+          },
+          {
+            type: 'slider',
+            start: 60,
+          },
+        ] satisfies echarts.DataZoomComponentOption[];
+      }),
+      first(),
+      tap(console.debug)
+    )
+  );
 
-  return <ScatterChart series={[currentSugar$, prognosis$]} />;
+  return <ScatterChart dataZoom={dataZoom$} series={[currentSugar$, prognosis$]} />;
 }

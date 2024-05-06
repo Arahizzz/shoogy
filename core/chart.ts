@@ -13,43 +13,39 @@ export type Plot = {
 
 export function getChartMarkers(
   activities: (MealCalculation | InjectionCalculation)[]
-): echarts.MarkLineComponentOption {
-  return {
-    symbol: ['none', 'circle'],
-    symbolSize: 7,
-    data: activities.map((activity) => {
-      if (activity instanceof MealCalculation) {
-        return {
-          name: 'Meal',
-          xAxis: tickToTime(activity.startTick),
-          label: {
-            formatter: `${activity.carbsCount}g`,
-            distance: 20,
-            color: 'hsl(24, 100%, 46.5%)',
-          },
-          itemStyle: {
-            color: 'hsl(24, 100%, 46.5%)',
-          },
-          lineStyle: {
-            width: 0,
-          },
-        };
-      } else {
-        return {
-          name: 'Injection',
-          xAxis: tickToTime(activity.startTick),
-          label: {
-            formatter: `${activity.insulinAmount}U`,
-            color: 'hsl(208, 100%, 47.3%)',
-          },
-          itemStyle: {
-            color: 'hsl(208, 100%, 47.3%)',
-          },
-          lineStyle: {
-            width: 0,
-          },
-        };
-      }
-    }),
-  };
+): NonNullable<echarts.MarkLineComponentOption['data']> {
+  return activities.map((activity) => {
+    if (activity instanceof MealCalculation) {
+      return {
+        name: 'Meal',
+        xAxis: tickToTime(activity.startTick),
+        label: {
+          formatter: `${activity.carbsCount}g`,
+          distance: 20,
+          color: 'hsl(24, 100%, 46.5%)',
+        },
+        itemStyle: {
+          color: 'hsl(24, 100%, 46.5%)',
+        },
+        lineStyle: {
+          width: 0,
+        },
+      };
+    } else {
+      return {
+        name: 'Injection',
+        xAxis: tickToTime(activity.startTick),
+        label: {
+          formatter: `${activity.insulinAmount}U`,
+          color: 'hsl(208, 100%, 47.3%)',
+        },
+        itemStyle: {
+          color: 'hsl(208, 100%, 47.3%)',
+        },
+        lineStyle: {
+          width: 0,
+        },
+      };
+    }
+  });
 }

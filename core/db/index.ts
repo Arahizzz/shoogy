@@ -52,12 +52,12 @@ export const getDb = (async () => {
     IDBKeyRange,
   });
 
-  if (__DEV__) {
-    const { removeRxDatabase } = require('rxdb');
-    console.log('Removing database');
-    const collections = await removeRxDatabase(name, storage);
-    console.log('Removed database', collections);
-  }
+  // if (__DEV__) {
+  //   const { removeRxDatabase } = require('rxdb');
+  //   console.log('Removing database');
+  //   const collections = await removeRxDatabase(name, storage);
+  //   console.log('Removed database', collections);
+  // }
 
   const db = await createRxDatabase({
     name,
