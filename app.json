@@ -17,7 +17,9 @@
           "android": {
             "kotlinVersion": "1.6.10",
             "packagingOptions": {
-              "pickFirst": ["**/libc++_shared.so"]
+              "pickFirst": [
+                "**/libc++_shared.so"
+              ]
             },
             "newArchEnabled": true,
             "windowSoftInputMode": "adjustResize"
@@ -40,7 +42,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true
     },
@@ -50,6 +54,14 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.anonymous.shoogyexpo"
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "71d32c55-452e-4901-b18f-9b15442818ad"
+      }
     }
   }
 }
