@@ -23,9 +23,12 @@ export class InjectionCalculation implements Calculation, SugarInfluence {
   }
 
   getActivityLevel(tick: number): number {
+    if (tick < this.startTick || tick > this.startTick + this.durationTicks) return 0;
     return this.activityCurve(tick);
   }
   getActivityDelta(fromTick: number, toTick: number): number {
+    if (fromTick < this.startTick) fromTick = this.startTick;
+    if (toTick > this.startTick + this.durationTicks) toTick = this.startTick + this.durationTicks;
     return integrate(this.activityCurve, fromTick, toTick, 1e-5, 30);
   }
   getSugarDelta(fromTick: number, toTick: number, profile: Profile): number {

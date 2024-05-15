@@ -42,14 +42,17 @@ export class MealCalculation implements Calculation, SugarInfluence {
     return lerp(xs, ys);
   }
 
-  public getActivityLevel(time: number): number {
-    return this.activityCurve(time);
+  public getActivityLevel(tick: number): number {
+    if (tick < this.startTick || tick > this.startTick + this.durationTicks) return 0;
+    return this.activityCurve(tick);
   }
-  getActivityDelta(from: number, to: number): number {
-    return integrate(this.activityCurve, from, to, 0.1);
+  getActivityDelta(fromTick: number, toTick: number): number {
+    if (fromTick < this.startTick) fromTick = this.startTick;
+    if (toTick > this.startTick + this.durationTicks) toTick = this.startTick + this.durationTicks;
+    return integrate(this.activityCurve, fromTick, toTick, 0.1);
   }
-  getSugarDelta(from: number, to: number, profile: Profile): number {
-    return (profile.carbSensitivity / 10) * this.getActivityDelta(from, to);
+  getSugarDelta(fromTick: number, toTick: number, profile: Profile): number {
+    return (profile.carbSensitivity / 10) * this.getActivityDelta(fromTick, toTick);
   }
 
   public getActivityPlot(xs: Axis) {
