@@ -1,3 +1,18 @@
+diff --git a/node_modules/rxdb/src/plugins/storage-dexie/dexie-helper.ts b/node_modules/rxdb/src/plugins/storage-dexie/dexie-helper.ts
+index 42659db..546506d 100644
+--- a/node_modules/rxdb/src/plugins/storage-dexie/dexie-helper.ts
++++ b/node_modules/rxdb/src/plugins/storage-dexie/dexie-helper.ts
+@@ -56,8 +56,8 @@ export function getDexieDbWithTables(
+                     booleanIndexes: getBooleanIndexes(schema)
+                 };
+             })();
+-            DEXIE_STATE_DB_BY_NAME.set(dexieDbName, state);
+-            REF_COUNT_PER_DEXIE_DB.set(state, 0);
++            DEXIE_STATE_DB_BY_NAME.set(dexieDbName, value);
++            REF_COUNT_PER_DEXIE_DB.set(value, 0);
+             return value;
+         }
+     );
 diff --git a/node_modules/rxdb/src/plugins/storage-dexie/dexie-query.ts b/node_modules/rxdb/src/plugins/storage-dexie/dexie-query.ts
 index 16838a2..cf3a128 100644
 --- a/node_modules/rxdb/src/plugins/storage-dexie/dexie-query.ts

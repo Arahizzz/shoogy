@@ -23,18 +23,51 @@
               includeEmulator = true;
               includeNDK = true;
               platformVersions = [ "34" ];
-              ndkVersion = "25.1.8937393";
+              ndkVersions = ["26.1.10909125" "25.1.8937393"];
               buildToolsVersions = ["33.0.1" "34.0.0"];
               cmakeVersions = ["3.22.1"];
             });
+          llvmPackage = pkgs.llvmPackages_16;
+          stdenv = llvmPackage.libcxxStdenv;
+          libcxx = llvmPackage.libraries.libcxx;
+          libcxxabi = llvmPackage.libraries.libcxxabi;
         in
         (pkgs.buildFHSEnv {
           name = "android-sdk-env";
           targetPkgs = pkgs: (with pkgs; [
-            jdk20
             androidComposition.androidsdk
-            glibc
+
+            jdk20
+            python3
+            nodejs
+            stdenv
+            libcxx
+            libcxxabi
+
+            git
+            gitRepo
+            gnupg
+            curl
+            procps
+            openssl
+            gnumake
+            nettools
+            schedtool
+            util-linux
+            m4
+            gperf
+            perl
+            libxml2
+            zip
+            unzip
+            bison
+            flex
+            lzop
           ]);
+          multiPkgs = pkgs: with pkgs;
+              [ zlib
+                ncurses5
+              ];
           profile = with pkgs; ''
             export JAVA_HOME="${jdk20}";
 
@@ -42,9 +75,11 @@
             export ANDROID_NDK_ROOT="$ANDROID_SDK_ROOT/ndk-bundle";
             export ANDROID_HOME="$ANDROID_SDK_ROOT";
 
+            export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib:/usr/lib32:${libcxx}/lib:${libcxxabi}/lib;
+
             export GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx4g";
           '';
-          runScript = "zsh";
+          runScript = "bash";
         }).env;
     };
 }
