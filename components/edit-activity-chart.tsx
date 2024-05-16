@@ -6,6 +6,7 @@ import {
   filter,
   map,
   Observable,
+  of,
   switchMap,
 } from 'rxjs';
 import { match } from 'ts-pattern';
@@ -108,5 +109,5 @@ export default function EditActivityChart({ activities$ }: CombinedChartProps) {
     )
   );
 
-  return <ScatterChart series={[plotInfo$]} />;
+  return <ScatterChart series={[plotInfo$]} dataZoom={of(undefined)} />;
 }

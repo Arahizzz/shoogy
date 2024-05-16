@@ -29,6 +29,7 @@ export default function ScatterChart({ title, series, dataZoom }: LineChartProps
             if (data[i] > maxY) maxY = data[i];
           }
         }
+        maxY = Math.round(maxY * 1e1) / 1e1;
 
         return {
           title: {
@@ -50,7 +51,7 @@ export default function ScatterChart({ title, series, dataZoom }: LineChartProps
 
   return (
     <YStack alignItems="center">
-      <View height={250} marginTop={-25}>
+      <View height={250} marginTop={-15}>
         <EchartComponent height={250} options$={options$} />
       </View>
     </YStack>

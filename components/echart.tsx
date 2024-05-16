@@ -1,4 +1,4 @@
-import { SkiaChart } from '@wuba/react-native-echarts';
+import { SkiaChart, SVGRenderer } from '@wuba/react-native-echarts';
 import { EChartsOption } from 'echarts';
 import { LineChart, ScatterChart } from 'echarts/charts';
 import {
@@ -14,11 +14,10 @@ import { useSubscription } from 'observable-hooks';
 import React, { useEffect, useRef } from 'react';
 import { useWindowDimensions } from 'react-native';
 import { Observable } from 'rxjs';
-import { CanvasRenderer } from 'echarts/renderers';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 echarts.use([
-  CanvasRenderer,
+  SVGRenderer,
   LineChart,
   GridComponent,
   ScatterChart,
@@ -41,7 +40,7 @@ export default function EchartComponent(props: Props) {
   useEffect(() => {
     if (!chart.current) {
       chart.current = echarts.init(ref.current, 'light', {
-        renderer: 'canvas',
+        renderer: 'svg',
         width,
         height: props.height,
       });
