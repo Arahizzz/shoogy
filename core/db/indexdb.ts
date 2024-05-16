@@ -1,4 +1,4 @@
-import { open, QueryResult, OPSQLiteConnection } from '@op-engineering/op-sqlite';
+import { open, OPSQLiteConnection, QueryResult } from '@op-engineering/op-sqlite';
 //@ts-ignore
 import setGlobalVars from 'indexeddbshim/dist/indexeddbshim-noninvasive';
 import type { ShimmedObject } from 'indexeddbshim/dist/setGlobalVars';
@@ -26,6 +26,7 @@ class WebSQLWrapper {
   ): void {
     this.db
       .transaction(async (transaction) => {
+        let txPromise: Promise<void> = Promise.resolve();
         const tx: SQLTransaction = {
           executeSql: (
             query: string,
@@ -33,31 +34,42 @@ class WebSQLWrapper {
             successCallback?: SQLTransactionSuccessCallback,
             errorCallback?: SQLTransactionErrorCallback
           ) => {
-            transaction
-              .executeAsync(query, params)
-              .then((result) => {
-                if (successCallback) {
-                  successCallback(tx, result);
-                }
-              })
-              .catch((error) => {
-                if (errorCallback) {
-                  errorCallback(tx, error);
-                }
-              });
+            txPromise = txPromise.then(() =>
+              transaction
+                .executeAsync(query, params)
+                .then((result) => {
+                  if (successCallback) {
+                    successCallback(tx, result);
+                  }
+                  return result;
+                })
+                .catch((error) => {
+                  console.error('Error executing SQL query', query, params, error);
+                  if (errorCallback) {
+                    errorCallback(tx, error);
+                  }
+                  throw error;
+                })
+            ) as Promise<void>;
           },
         };
-        if (onSuccess) {
-          onSuccess();
-        }
+
         txCallback(tx);
+
+        return txPromise
+          .catch((error) => {
+            if (onError) {
+              onError(error);
+            }
+            throw error;
+          })
+          .then(() => {
+            if (onSuccess) {
+              onSuccess();
+            }
+          });
       })
-      .catch((error) => {
-        console.error('Transaction error:', error);
-        if (onError) {
-          onError(error);
-        }
-      });
+      .catch(console.error);
   }
 
   readTransaction(callback: SQLTransactionCallback): void {

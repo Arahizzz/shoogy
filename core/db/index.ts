@@ -64,6 +64,7 @@ export const getDb = (async () => {
     // @ts-ignore
     storage,
     multiInstance: Platform.OS === 'web',
+    ignoreDuplicate: __DEV__,
   });
 
   // @ts-ignore
