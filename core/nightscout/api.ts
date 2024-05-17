@@ -1,30 +1,41 @@
 import { fromFetch } from 'rxjs/fetch';
-import { EMPTY, expand, first, from, map, reduce, switchMap, tap, timer } from 'rxjs';
+import { EMPTY, expand, filter, first, from, map, switchMap, timer } from 'rxjs';
 
 import { timeToTick } from '~/core/time';
 import { Direction, GlucoseEntry } from '~/core/models/glucoseEntry';
 import { getDb } from '~/core/db';
+import loginManager from '~/core/nightscout/login-manager';
+import { isDefined } from '~/core/utils';
 
-const apiBase = 'https://nightscout.server.com/api';
-
-const jwt = fromFetch(`${apiBase}/v2/authorization/request/{API-KEY}`, {
-  selector: (response: Response) => response.json(),
-}).pipe(map((jwt: { token: string }) => jwt.token));
+const jwt = from(loginManager.loginStatus).pipe(
+  filter(isDefined),
+  switchMap(({ token, url }) =>
+    fromFetch(`${url}/v2/authorization/request/${token}`, {
+      selector: (response: Response) => response.json(),
+    }).pipe(
+      map((jwt: { token: string }) => ({
+        token: jwt.token,
+        url,
+      }))
+    )
+  )
+);
 
 export const fetchBloodGlucose = (startDate: number, endDate: number, limit = 100) =>
   jwt.pipe(
-    switchMap((token) =>
+    switchMap(({ token, url }) =>
       fromFetch(
-        `${apiBase}/v3/entries?sort$desc=date&date$gt=${startDate}&date$lt=${endDate}&limit=100&type$eq=sgv`,
+        `${url}/v3/entries?sort$desc=date&date$gt=${startDate}&date$lt=${endDate}&limit=100&type$eq=sgv`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-          selector: (response: Response) => response.json() as Promise<EntriesResponse[]>,
+          selector: (response: Response) =>
+            response.json() as Promise<{ result: EntriesResponse[] }>,
         }
       )
     ),
-    tap(console.debug),
+    // tap(console.debug),
     map((response: { result: EntriesResponse[] }) =>
       response.result.map((r) => {
         let direction = r.direction;
@@ -43,17 +54,17 @@ export const fetchBloodGlucose = (startDate: number, endDate: number, limit = 10
   );
 
 export const fetchBloodGlucoseUntilDate = (startDate: number, endDate: number) => {
-  console.log(
-    'fetchBloodGlucoseUntilDate',
-    new Date(startDate).toISOString(),
-    new Date(endDate).toISOString()
-  );
+  // console.log(
+  //   'fetchBloodGlucoseUntilDate',
+  //   new Date(startDate).toISOString(),
+  //   new Date(endDate).toISOString()
+  // );
   return fetchBloodGlucose(startDate, endDate, 10).pipe(
     expand((data) => {
       if (!data.length) return EMPTY;
       const endDateSliding = data[data.length - 1].date;
       if (endDateSliding < startDate) return EMPTY;
-      console.log('fetchBloodGlucoseUntilDate', new Date(endDateSliding).toISOString());
+      // console.log('fetchBloodGlucoseUntilDate', new Date(endDateSliding).toISOString());
       return fetchBloodGlucose(startDate, endDateSliding);
     })
   );
