@@ -1,10 +1,10 @@
-import { ChevronDown, Pizza, Syringe, Trash2 } from '@tamagui/lucide-icons';
+import { ChevronDown, ChevronUp, Pizza, Syringe, Trash2 } from '@tamagui/lucide-icons';
 import { router } from 'expo-router';
 import { useObservablePickState } from 'observable-hooks';
 import { useObservableState } from 'observable-hooks/src';
 import React, { useEffect } from 'react';
 import { ColorValue } from 'react-native';
-import { BehaviorSubject, concat, first, map, Observable, of } from 'rxjs';
+import { BehaviorSubject, first, map, of } from 'rxjs';
 import {
   Adapt,
   Button,
@@ -26,7 +26,7 @@ import { Activity } from '~/core/models/activity';
 import { Injection } from '~/core/models/injection';
 import { Meal } from '~/core/models/meal';
 import { linkNext } from '~/core/rxjs';
-import { decrementTick, getCurrentTick, incrementTick } from '~/core/time';
+import { decrementTick, getCurrentTick } from '~/core/time';
 import { newId } from '~/core/utils';
 
 class ActivityStore {
@@ -121,9 +121,8 @@ export default function EditActivityScreen() {
   return (
     <ScrollView stickyHeaderIndices={[0]}>
       <YStack backgroundColor="whitesmoke" alignItems="center">
-        <EditActivityChart activities$={store.activitiesState$} startSugar$={store.startSugar$} />
+        <EditActivityChart activities$={store.activitiesState$} />
         <XStack justifyContent="center" gap={10}>
-          {/*<StartSugarEdit />*/}
           <Button
             icon={<Pizza />}
             variant="outlined"

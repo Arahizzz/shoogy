@@ -1,5 +1,5 @@
 import { useFonts } from 'expo-font';
-import { SplashScreen, Stack } from 'expo-router';
+import { Slot, SplashScreen, Stack } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { TamaguiProvider } from 'tamagui';
 
@@ -40,9 +40,9 @@ export default function RootLayout() {
 
   return (
     <TamaguiProvider config={config}>
-      <Stack initialRouteName="/activities">
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+      <Stack>
+        <Stack.Screen name="(app)" options={{ headerShown: false }} />
+        <Stack.Screen name="login" options={{ headerShown: false }} />
       </Stack>
     </TamaguiProvider>
   );
