@@ -3,36 +3,39 @@ import { open, OPSQLiteConnection, QueryResult } from '@op-engineering/op-sqlite
 import setGlobalVars from 'indexeddbshim/dist/indexeddbshim-noninvasive';
 import type { ShimmedObject } from 'indexeddbshim/dist/setGlobalVars';
 
-type SQLTransactionCallback = (tx: SQLTransaction) => void;
-type SQLTransactionErrorCallback = (tx: SQLTransaction, error: any) => void;
-type SQLTransactionSuccessCallback = (tx: SQLTransaction, resultSet: QueryResult) => void;
+type WebSQLTransactionCallback = (tx: WebSQLTransaction) => void;
+type WebSQLTransactionErrorCallback = (tx: WebSQLTransaction, error: any) => void;
+type WebSQLTransactionSuccessCallback = (tx: WebSQLTransaction, resultSet: QueryResult) => void;
 
-interface SQLTransaction {
+interface WebSQLTransaction {
   executeSql(
     query: string,
     params: any[],
-    successCallback?: SQLTransactionSuccessCallback,
-    errorCallback?: SQLTransactionErrorCallback
+    successCallback?: WebSQLTransactionSuccessCallback,
+    errorCallback?: WebSQLTransactionErrorCallback
   ): void;
 }
 
+/**
+ * Shim around the op-sqlite library to provide a WebSQL-like API
+ */
 class WebSQLWrapper {
   constructor(private db: OPSQLiteConnection) {}
 
   transaction(
-    txCallback: SQLTransactionCallback,
+    txCallback: WebSQLTransactionCallback,
     onError?: (e: any) => void,
     onSuccess?: () => void
   ): void {
     this.db
       .transaction(async (transaction) => {
         let txPromise: Promise<void> = Promise.resolve();
-        const tx: SQLTransaction = {
+        const tx: WebSQLTransaction = {
           executeSql: (
             query: string,
             params: any[],
-            successCallback?: SQLTransactionSuccessCallback,
-            errorCallback?: SQLTransactionErrorCallback
+            successCallback?: WebSQLTransactionSuccessCallback,
+            errorCallback?: WebSQLTransactionErrorCallback
           ) => {
             txPromise = txPromise.then(() =>
               transaction
@@ -72,7 +75,7 @@ class WebSQLWrapper {
       .catch(console.error);
   }
 
-  readTransaction(callback: SQLTransactionCallback): void {
+  readTransaction(callback: WebSQLTransactionCallback): void {
     this.transaction(callback);
   }
 
