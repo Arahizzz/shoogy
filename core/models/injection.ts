@@ -2,7 +2,7 @@ import { RxJsonSchema } from 'rxdb/src/types';
 
 export type Injection = {
   id: string;
-  type: 'injection';
+  type: 'insulin';
   insulinType: string;
   insulinAmount: number;
   startTick: number;

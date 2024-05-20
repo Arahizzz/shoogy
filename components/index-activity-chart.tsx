@@ -47,7 +47,7 @@ export default function IndexActivityChart() {
           map((mealType) => ({ ...meal, mealType }))
         );
       })
-      .with({ type: 'injection' }, (injection): Observable<PopulatedInjection> => {
+      .with({ type: 'insulin' }, (injection): Observable<PopulatedInjection> => {
         return db.insulin_types.findOne(injection.insulinType).$.pipe(
           throwIfNull(),
           map((insulinType) => ({ ...injection, insulinType }))
@@ -59,7 +59,7 @@ export default function IndexActivityChart() {
     return match(populatedActivity)
       .returnType<ActivityFunction>()
       .with({ type: 'meal' }, (meal) => new MealCalculation(meal))
-      .with({ type: 'injection' }, (injection) => new InjectionCalculation(injection))
+      .with({ type: 'insulin' }, (injection) => new InjectionCalculation(injection))
       .exhaustive();
   };
   const calculatePrediction = (

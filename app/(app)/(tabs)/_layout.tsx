@@ -1,4 +1,4 @@
-import { Activity, FileHeart } from '@tamagui/lucide-icons';
+import { Activity, FileHeart, Settings } from '@tamagui/lucide-icons';
 import { Tabs } from 'expo-router';
 import { StyleSheet } from 'react-native';
 
@@ -17,11 +17,11 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="settings"
         options={{
-          title: 'Profiles',
+          title: 'Settings',
           headerShown: false,
-          tabBarIcon: (props) => <FileHeart color="black" size={20} />,
+          tabBarIcon: (props) => <Settings color="black" size={20} />,
         }}
       />
       <Tabs.Screen

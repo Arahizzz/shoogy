@@ -75,24 +75,24 @@ export const mealTypes: MealType[] = [
     id: 'low-gi',
     name: 'Low GI',
     carbsAbsorptionRatePerHr: 30,
-    digestedPercentage: 1,
+    digestedPercentage: 100,
   },
   {
     id: 'medium-gi',
     name: 'Medium GI',
     carbsAbsorptionRatePerHr: 45,
-    digestedPercentage: 1,
+    digestedPercentage: 100,
   },
   {
     id: 'high-gi',
     name: 'High GI',
     carbsAbsorptionRatePerHr: 60,
-    digestedPercentage: 1,
+    digestedPercentage: 100,
   },
   {
     id: 'protein',
     name: 'Protein',
     carbsAbsorptionRatePerHr: 15,
-    digestedPercentage: 0.4,
+    digestedPercentage: 40,
   },
 ];

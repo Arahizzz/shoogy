@@ -32,7 +32,7 @@ import { newId } from '~/core/utils';
 class ActivityStore {
   public activitiesState$ = new BehaviorSubject<BehaviorSubject<Activity>[]>([]);
   public startSugar$ = new BehaviorSubject(0);
-  private toDelete: { type: 'injection' | 'meal'; id: string }[] = [];
+  private toDelete: { type: 'insulin' | 'meal'; id: string }[] = [];
 
   async init() {
     const db = await getDb;
@@ -87,7 +87,7 @@ class ActivityStore {
       if (activity$.value.type === 'meal') {
         const meal = activity$.value as Meal;
         await db.meals.upsert(meal);
-      } else if (activity$.value.type === 'injection') {
+      } else if (activity$.value.type === 'insulin') {
         const injection = activity$.value as Injection;
         await db.injections.upsert(injection);
       }
@@ -97,7 +97,7 @@ class ActivityStore {
       if (type === 'meal') {
         const meal = await db.meals.findOne(id).exec();
         if (meal) await meal.remove();
-      } else if (type === 'injection') {
+      } else if (type === 'insulin') {
         const injection = await db.injections.findOne(id).exec();
         if (injection) await injection.remove();
       }
@@ -145,7 +145,7 @@ export default function EditActivityScreen() {
             width={150}
             onPress={() =>
               store.newActivity({
-                type: 'injection',
+                type: 'insulin',
                 insulinType: 'Apidra',
                 insulinAmount: 4,
                 startTick: getCurrentTick(),
@@ -220,7 +220,7 @@ function DeleteButton({
   id,
   color,
 }: {
-  type: 'injection' | 'meal';
+  type: 'insulin' | 'meal';
   id: string;
   color?: string;
 }) {
@@ -342,7 +342,7 @@ function InsulinEdit({ insulin$ }: { insulin$: BehaviorSubject<Injection> }) {
     <ActivityEditCard backgroundColor="rgba(0, 106, 220, 0.25)">
       <SyringeIcon />
       <XStack>
-        <DeleteButton type={'injection'} id={insulin$.value.id} color={color} />
+        <DeleteButton type={'insulin'} id={insulin$.value.id} color={color} />
         <ActivityTimeEdit
           color={color}
           fontColor={fontColor}

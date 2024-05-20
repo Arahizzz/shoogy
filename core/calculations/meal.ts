@@ -60,7 +60,8 @@ export class MealCalculation implements Calculation, SugarInfluence {
   }
   getSugarDelta(fromTick: number, toTick: number, profile: Profile): number {
     return (
-      ((profile.carbSensitivity * this.mealType.digestedPercentage) / 10) *
+      (profile.carbSensitivity / 10) *
+      (this.mealType.digestedPercentage / 100) *
       this.getActivityDelta(fromTick, toTick)
     );
   }
