@@ -2,7 +2,7 @@ import { of } from 'rxjs';
 import { Stack } from 'tamagui';
 
 import ScatterChart from '~/components/scatter-chart';
-import { MealCalculation } from '~/core/mealCalculation';
+import { MealCalculation } from '~/core/calculations/meal';
 import { getCurrentTick, incrementTick } from '~/core/time';
 
 export default function FoodScreen() {

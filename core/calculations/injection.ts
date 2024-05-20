@@ -1,25 +1,24 @@
 import { csplineMonot } from 'algomatic';
-import type { Calculation } from '~/core/calculation';
-import type { SugarInfluence } from 'core/sugarInfluence';
+import type { Calculation } from '~/core/calculations/index';
+import type { SugarInfluence } from '~/core/sugarInfluence';
 import integrate from 'integrate-adaptive-simpson';
 
-import type { Axis } from './chart';
+import type { Axis } from '../chart';
 import { Profile } from '~/core/models/profile';
-import { ActivityPoints, PopulatedInjection } from './models/injection';
+import { ActivityPoints, PopulatedInjection } from '../models/injection';
 
 export class InjectionCalculation implements Calculation, SugarInfluence {
-  public readonly activity: ActivityPoints[];
   public readonly insulinAmount: number;
   public readonly startTick: number;
   public readonly durationTicks;
   private readonly activityCurve;
 
   constructor({ insulinType, insulinAmount, startTick }: PopulatedInjection) {
-    this.activity = insulinType.points;
+    const activity = insulinType.points;
     this.insulinAmount = insulinAmount;
     this.startTick = startTick;
-    this.durationTicks = this.activity[this.activity.length - 1].tick;
-    this.activityCurve = this.initActivityCurve();
+    this.durationTicks = activity[activity.length - 1].tick;
+    this.activityCurve = this.initActivityCurve(activity);
   }
 
   getActivityLevel(tick: number): number {
@@ -35,9 +34,9 @@ export class InjectionCalculation implements Calculation, SugarInfluence {
     return -profile.insulinSensitivity * this.getActivityDelta(fromTick, toTick);
   }
 
-  private initActivityCurve() {
-    const xs = this.activity.map((a) => this.startTick + a.tick);
-    let ys = this.activity.map((a) => a.value);
+  private initActivityCurve(activity: ActivityPoints[]) {
+    const xs = activity.map((a) => this.startTick + a.tick);
+    let ys = activity.map((a) => a.value);
 
     const f = csplineMonot(xs, ys);
     const area = integrate(f, this.startTick, this.startTick + this.durationTicks, 1e-5, 30);

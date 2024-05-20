@@ -2,7 +2,7 @@ import { of } from 'rxjs';
 import { Stack } from 'tamagui';
 
 import ScatterChart from '~/components/scatter-chart';
-import { Apidra, InjectionCalculation } from '~/core/injectionCalculation';
+import { Apidra, InjectionCalculation } from '~/core/calculations/injection';
 import { getCurrentTick, incrementTick } from '~/core/time';
 
 export default function InsulinScreen() {

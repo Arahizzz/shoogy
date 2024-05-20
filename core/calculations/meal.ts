@@ -1,11 +1,13 @@
 import { lerp } from 'algomatic';
 import integrate from 'integrate-adaptive-simpson';
 
-import type { Calculation } from '~/core/calculation';
+import type { Calculation } from '~/core/calculations/index';
 import type { Axis } from '~/core/chart';
 import type { SugarInfluence } from '~/core/sugarInfluence';
 import { Profile } from '~/core/models/profile';
-import { Meal, PopulatedMeal } from '~/core/models/meal';
+import { MealType, PopulatedMeal } from '~/core/models/meal';
+
+const EASTING_INTERVAL = 3;
 
 export class MealCalculation implements Calculation, SugarInfluence {
   public readonly durationTicks;
@@ -13,21 +15,26 @@ export class MealCalculation implements Calculation, SugarInfluence {
   public carbsCount: number;
   public carbsAbsorptionRatePerTick: number;
   public startTick: number;
+  public mealType: MealType;
 
   constructor({ carbsCount, mealType, startTick }: PopulatedMeal) {
     this.carbsCount = carbsCount;
     this.carbsAbsorptionRatePerTick = (mealType.carbsAbsorptionRatePerHr / 60) * 5;
     this.startTick = startTick;
-    this.durationTicks = Math.max(carbsCount / this.carbsAbsorptionRatePerTick, 6);
+    // Clamp the duration to cover at least 2 easting intervals (in case of very low carbs count)
+    this.durationTicks = Math.max(
+      carbsCount / this.carbsAbsorptionRatePerTick,
+      EASTING_INTERVAL * 2
+    );
     this.activityCurve = this.initActivityCurve();
+    this.mealType = mealType;
   }
 
   private initActivityCurve() {
-    const easingInterval = 3;
     const xs = [
       this.startTick,
-      this.startTick + easingInterval,
-      this.startTick + this.durationTicks - easingInterval,
+      this.startTick + EASTING_INTERVAL,
+      this.startTick + this.durationTicks - EASTING_INTERVAL,
       this.startTick + this.durationTicks,
     ];
     let ys = [0, 1, 1, 0];
@@ -52,7 +59,10 @@ export class MealCalculation implements Calculation, SugarInfluence {
     return integrate(this.activityCurve, fromTick, toTick, 0.1);
   }
   getSugarDelta(fromTick: number, toTick: number, profile: Profile): number {
-    return (profile.carbSensitivity / 10) * this.getActivityDelta(fromTick, toTick);
+    return (
+      ((profile.carbSensitivity * this.mealType.digestedPercentage) / 10) *
+      this.getActivityDelta(fromTick, toTick)
+    );
   }
 
   public getActivityPlot(xs: Axis) {
