@@ -2,12 +2,9 @@ import { ChevronRight } from '@tamagui/lucide-icons';
 import { Link } from 'expo-router';
 import { useObservableState } from 'observable-hooks/src';
 import { Button, Card, RadioGroup, Text, View, YStack } from 'tamagui';
-
-import { useDb } from '~/core/db';
-import { useObservablePickState } from 'observable-hooks';
+import { db } from '~/core/db';
 
 export default function ProfileScreen() {
-  const db = useDb();
   const addProfile = async () => {
     await db.profiles.insert({
       id: 'p' + Date.now(),

@@ -16,8 +16,8 @@ import {
   ShieldQuestion,
 } from '@tamagui/lucide-icons';
 import { IconProps } from '@tamagui/helpers-icon';
-import { useDb } from '~/core/db';
 import IndexActivityChart from '~/components/index-activity-chart';
+import { db } from '~/core/db';
 
 export default function CombinedScreen() {
   useSubscription(glucoseFetchWorker);
@@ -34,7 +34,6 @@ export default function CombinedScreen() {
 }
 
 function CurrentGlucose() {
-  const db = useDb();
   const [bloodGlucose] = useObservableState(
     () =>
       db.glucose_entries.find({

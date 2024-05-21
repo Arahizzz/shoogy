@@ -21,21 +21,20 @@ import {
 import EditActivityChart from '~/components/edit-activity-chart';
 import NumericInput from '~/components/numeric-input';
 import TimeInput from '~/components/time-input';
-import { getDb, useDb } from '~/core/db';
 import { Activity } from '~/core/models/activity';
 import { Injection } from '~/core/models/injection';
 import { Meal } from '~/core/models/meal';
 import { linkNext } from '~/core/rxjs';
 import { decrementTick, getCurrentTick } from '~/core/time';
 import { newId } from '~/core/utils';
+import { db } from '~/core/db';
 
 class ActivityStore {
   public activitiesState$ = new BehaviorSubject<BehaviorSubject<Activity>[]>([]);
   public startSugar$ = new BehaviorSubject(0);
-  private toDelete: { type: 'insulin' | 'meal'; id: string }[] = [];
+  private toDelete: { type: 'injection' | 'meal'; id: string }[] = [];
 
   async init() {
-    const db = await getDb;
     // Load activities that were created in the last 12 hours
     const now = getCurrentTick();
     const twelveHoursAgo = decrementTick(now, (60 / 5) * 12);
@@ -82,7 +81,6 @@ class ActivityStore {
     );
   }
   async saveActivities() {
-    const db = await getDb;
     for (const activity$ of this.activitiesState$.value) {
       if (activity$.value.type === 'meal') {
         const meal = activity$.value as Meal;
@@ -97,7 +95,7 @@ class ActivityStore {
       if (type === 'meal') {
         const meal = await db.meals.findOne(id).exec();
         if (meal) await meal.remove();
-      } else if (type === 'insulin') {
+      } else if (type === 'injection') {
         const injection = await db.injections.findOne(id).exec();
         if (injection) await injection.remove();
       }
@@ -220,7 +218,7 @@ function DeleteButton({
   id,
   color,
 }: {
-  type: 'insulin' | 'meal';
+  type: 'injection' | 'meal';
   id: string;
   color?: string;
 }) {
@@ -281,7 +279,6 @@ function MealEdit({ meal$ }: { meal$: BehaviorSubject<Meal> }) {
 }
 
 function MealTypeEdit({ meal$ }: { meal$: BehaviorSubject<Meal> }) {
-  const db = useDb();
   const [mealTypes] = useObservableState(() => db.meal_types.find().$, []);
   const { mealType } = useObservablePickState(meal$, meal$.value, 'mealType');
   const changeType = (mealType: string) => {
@@ -342,7 +339,7 @@ function InsulinEdit({ insulin$ }: { insulin$: BehaviorSubject<Injection> }) {
     <ActivityEditCard backgroundColor="rgba(0, 106, 220, 0.25)">
       <SyringeIcon />
       <XStack>
-        <DeleteButton type={'insulin'} id={insulin$.value.id} color={color} />
+        <DeleteButton type={'injection'} id={insulin$.value.id} color={color} />
         <ActivityTimeEdit
           color={color}
           fontColor={fontColor}

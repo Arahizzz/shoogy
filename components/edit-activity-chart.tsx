@@ -13,7 +13,6 @@ import { match } from 'ts-pattern';
 
 import ScatterChart from '~/components/scatter-chart';
 import { getChartMarkers } from '~/core/chart';
-import { useDb } from '~/core/db';
 import { InjectionCalculation } from '~/core/calculations/injection';
 import { MealCalculation } from '~/core/calculations/meal';
 import { Activity, PopulatedActivity } from '~/core/models/activity';
@@ -25,6 +24,7 @@ import { isDefined, throwIfNull } from '~/core/utils';
 import { Profile } from '~/core/models/profile';
 import { GlucoseEntry } from '~/core/models/glucoseEntry';
 import { editScreenSeries, SeriesProps } from '~/core/chart/series';
+import { db } from '~/core/db';
 
 type ActivityFunction = MealCalculation | InjectionCalculation;
 
@@ -33,8 +33,6 @@ type CombinedChartProps = {
 };
 
 export default function EditActivityChart({ activities$ }: CombinedChartProps) {
-  const db = useDb();
-
   const populateActivity = (activity: Activity): Observable<PopulatedActivity> => {
     return match(activity)
       .returnType<Observable<PopulatedActivity>>()

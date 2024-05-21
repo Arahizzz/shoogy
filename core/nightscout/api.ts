@@ -3,7 +3,7 @@ import { EMPTY, expand, filter, first, from, map, switchMap, timer } from 'rxjs'
 
 import { timeToTick } from '~/core/time';
 import { Direction, GlucoseEntry } from '~/core/models/glucoseEntry';
-import { getDb } from '~/core/db';
+import { db } from '~/core/db';
 import loginManager from '~/core/nightscout/login-manager';
 import { isDefined } from '~/core/utils';
 
@@ -77,21 +77,17 @@ type EntriesResponse = {
   direction: Direction | 'NOT COMPUTABLE' | 'RATE OUT OF RANGE';
 };
 
-export const glucoseFetchWorker = from(getDb).pipe(
-  switchMap((db) =>
-    timer(0, 5 * 1000 * 60).pipe(
-      switchMap(() =>
-        db.glucose_entries
-          .findOne({
-            sort: [{ date: 'desc' }],
-          })
-          .$.pipe(
-            map((entry) => (entry ? entry.date : Date.now() - 12 * 60 * 60 * 1000)),
-            first()
-          )
-      ),
-      switchMap((lastEntryDate) => fetchBloodGlucoseUntilDate(lastEntryDate, Date.now())),
-      switchMap((entries) => db.glucose_entries.bulkUpsert(entries))
-    )
-  )
+export const glucoseFetchWorker = timer(0, 5 * 1000 * 60).pipe(
+  switchMap(() =>
+    db.glucose_entries
+      .findOne({
+        sort: [{ date: 'desc' }],
+      })
+      .$.pipe(
+        map((entry) => (entry ? entry.date : Date.now() - 12 * 60 * 60 * 1000)),
+        first()
+      )
+  ),
+  switchMap((lastEntryDate) => fetchBloodGlucoseUntilDate(lastEntryDate, Date.now())),
+  switchMap((entries) => db.glucose_entries.bulkUpsert(entries))
 );

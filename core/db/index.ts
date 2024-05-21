@@ -34,9 +34,9 @@ export type Database = RxDatabase<
   }
 >;
 
-let _db: Database | null = null;
+export let db: Database = undefined!;
 
-const seedData = async (db: Database) => {
+const seedData = async () => {
   await db.insulin_types.upsert(Apidra);
   await db.meal_types.bulkUpsert(mealTypes);
   await db.profiles.upsert(defaultProfile);
@@ -44,7 +44,7 @@ const seedData = async (db: Database) => {
   await db.states.profile_settings.set('selectedProfileId', (_) => defaultProfile.id);
 };
 
-export const getDb = (async () => {
+export async function initDb() {
   const name = 'shoogydb';
   const storage = getRxStorageDexie({
     // @ts-ignore
@@ -59,7 +59,7 @@ export const getDb = (async () => {
   //   console.log('Removed database', collections);
   // }
 
-  const db = await createRxDatabase({
+  const dbInstance = await createRxDatabase({
     name,
     // @ts-ignore
     storage,
@@ -68,30 +68,22 @@ export const getDb = (async () => {
   });
 
   // @ts-ignore
-  await db.addCollections<DatabaseCollections>(collections);
+  await dbInstance.addCollections<DatabaseCollections>(collections);
   console.log('RxDB has been initialized');
 
   for (const state of Object.values(states)) {
-    await db.addState(state);
+    await dbInstance.addState(state);
   }
 
-  _db = db as unknown as Database;
+  db = dbInstance as unknown as Database;
 
-  await seedData(_db);
-
-  return _db;
-})();
-
-export function useDb(): Database {
-  if (_db) return _db;
-  throw getDb;
+  await seedData();
 }
 
 export function useObservableDoc<C extends keyof DatabaseCollections>(
   collection: C,
   selector: MangoQueryNoLimit<GetCollectionType<C>> | string
 ): Observable<RxDocument<GetCollectionType<C>>> {
-  const db = useDb();
   return useObservable(() =>
     db[collection].findOne(selector).$.pipe(throwIfNull())
   ) as unknown as Observable<RxDocument<GetCollectionType<C>>>;

@@ -3,13 +3,13 @@ import { filter, merge, of } from 'rxjs';
 import { Button, Form, Input, styled, Text, XStack, YStack } from 'tamagui';
 
 import NumericInput from '~/components/numeric-input';
-import { useDb } from '~/core/db';
 import { isDefined } from '~/core/utils';
 import { useObservable, useObservableState } from 'observable-hooks';
 import { nanoid } from 'nanoid';
 import { InsulinType } from '~/core/models/injection';
 import { Plus, Trash2 } from '@tamagui/lucide-icons';
 import React from 'react';
+import { db } from '~/core/db';
 
 type QueryParams = {
   id: string;
@@ -29,7 +29,6 @@ const initialMealTypeForm: InsulinTypeForm = {
 export default function EditInsulinScreen() {
   const navigation = useNavigation();
   const { id } = useLocalSearchParams<QueryParams>();
-  const db = useDb();
 
   const insulinInit$ = useObservable(() => db.insulin_types.findOne(id).$);
   const [insulin, setInsulin] = useObservableState<InsulinTypeForm>(

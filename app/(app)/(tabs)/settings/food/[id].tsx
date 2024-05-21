@@ -1,13 +1,13 @@
 import { useLocalSearchParams, useNavigation } from 'expo-router';
-import { combineLatestAll, filter, map, merge, mergeAll, Observable } from 'rxjs';
+import { filter, map, merge } from 'rxjs';
 import { Button, Form, Input, styled, Text, XStack } from 'tamagui';
 
 import NumericInput from '~/components/numeric-input';
-import { useDb } from '~/core/db';
 import { isDefined } from '~/core/utils';
 import { useObservable, useObservableState } from 'observable-hooks';
 import { MealType } from '~/core/models/meal';
 import { nanoid } from 'nanoid';
+import { db } from '~/core/db';
 
 type QueryParams = {
   id: string;
@@ -23,7 +23,6 @@ const initialMealTypeForm: MealTypeForm = {
 export default function EditFoodScreen() {
   const navigation = useNavigation();
   const { id } = useLocalSearchParams<QueryParams>();
-  const db = useDb();
 
   const mealInit$ = useObservable(() => db.meal_types.findOne(id).$);
   const [meal, setMeal] = useObservableState<MealTypeForm>(
