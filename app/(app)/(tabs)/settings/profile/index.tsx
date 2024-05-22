@@ -46,7 +46,9 @@ export default function ProfileScreen() {
               </RadioGroup.Item>
               <Text color="black">{profile.name}</Text>
             </View>
-            <Link href={{ pathname: '/(tabs)/profile/[id]', params: { id: profile.id } }} asChild>
+            <Link
+              href={{ pathname: '/(app)/(tabs)/settings/profile/[id]', params: { id: profile.id } }}
+              asChild>
               <Button paddingRight={0}>
                 <Text>Edit</Text>
                 <ChevronRight />

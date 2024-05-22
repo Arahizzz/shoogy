@@ -8,7 +8,7 @@ import {
   useGetObservableProperty,
   useStateFromObservable,
   useStateFromObservableAndInitial,
-} from '~/core/utils';
+} from '~/core/rxjs';
 
 export default function EditProfileScreen() {
   const navigation = useNavigation();

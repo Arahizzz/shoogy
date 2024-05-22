@@ -14,11 +14,11 @@ import {
   states,
 } from '~/core/db/collections';
 import { IDBKeyRange, indexedDB } from '~/core/db/indexdb';
-import { throwIfNull } from '~/core/utils';
 import { RxDBStatePlugin } from 'rxdb/plugins/state';
 import { Apidra } from '~/core/models/injection';
 import { mealTypes } from '~/core/models/meal';
 import { defaultProfile } from '~/core/models/profile';
+import { throwIfNull } from '~/core/rxjs';
 
 if (__DEV__) {
   disableWarnings();

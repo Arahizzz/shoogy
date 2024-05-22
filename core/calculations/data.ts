@@ -1,5 +1,4 @@
 import { db, initDb } from '~/core/db';
-import { mapArray, throwIfNull, unwrapDoc } from '~/core/utils';
 import {
   combineLatest,
   combineLatestWith,
@@ -14,6 +13,8 @@ import { populateInjection, populateMeal } from '~/core/models/activity';
 import { getCurrentTick, timeToTick } from '~/core/time';
 import { MealCalculation } from '~/core/calculations/meal';
 import { InjectionCalculation } from '~/core/calculations/injection';
+import { mapArray, throwIfNull } from '~/core/rxjs';
+import { unwrapDoc } from '~/core/utils';
 
 export const activeProfile$ = from(initDb).pipe(
   switchMap((db) =>
