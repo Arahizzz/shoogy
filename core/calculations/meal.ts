@@ -5,29 +5,38 @@ import type { Calculation } from '~/core/calculations/index';
 import type { Axis } from '~/core/chart';
 import type { SugarInfluence } from '~/core/sugarInfluence';
 import { Profile } from '~/core/models/profile';
-import { MealType, PopulatedMeal } from '~/core/models/meal';
+import { PopulatedMeal } from '~/core/models/meal';
 
 const EASTING_INTERVAL = 3;
 
 export class MealCalculation implements Calculation, SugarInfluence {
+  public readonly profile: Profile;
+  public readonly meal: PopulatedMeal;
   public readonly durationTicks;
   private readonly activityCurve;
-  public carbsCount: number;
-  public carbsAbsorptionRatePerTick: number;
-  public startTick: number;
-  public mealType: MealType;
+  private readonly carbsAbsorptionRatePerTick;
 
-  constructor({ carbsCount, mealType, startTick }: PopulatedMeal) {
-    this.carbsCount = carbsCount;
-    this.carbsAbsorptionRatePerTick = (mealType.carbsAbsorptionRatePerHr / 60) * 5;
-    this.startTick = startTick;
+  public get startTick() {
+    return this.meal.startTick;
+  }
+  public get carbsCount() {
+    return this.meal.carbsCount;
+  }
+  public get mealType() {
+    return this.meal.mealType;
+  }
+
+  constructor(meal: PopulatedMeal, profile: Profile) {
+    this.meal = meal;
+    this.profile = profile;
+
+    this.carbsAbsorptionRatePerTick = (this.mealType.carbsAbsorptionRatePerHr / 60) * 5;
     // Clamp the duration to cover at least 2 easting intervals (in case of very low carbs count)
     this.durationTicks = Math.max(
-      carbsCount / this.carbsAbsorptionRatePerTick,
+      this.carbsCount / this.carbsAbsorptionRatePerTick,
       EASTING_INTERVAL * 2
     );
     this.activityCurve = this.initActivityCurve();
-    this.mealType = mealType;
   }
 
   private initActivityCurve() {
@@ -58,9 +67,9 @@ export class MealCalculation implements Calculation, SugarInfluence {
     if (toTick > this.startTick + this.durationTicks) toTick = this.startTick + this.durationTicks;
     return integrate(this.activityCurve, fromTick, toTick, 0.1);
   }
-  getSugarDelta(fromTick: number, toTick: number, profile: Profile): number {
+  getSugarDelta(fromTick: number, toTick: number): number {
     return (
-      (profile.carbSensitivity / 10) *
+      (this.profile.carbSensitivity / 10) *
       (this.mealType.digestedPercentage / 100) *
       this.getActivityDelta(fromTick, toTick)
     );
@@ -70,9 +79,13 @@ export class MealCalculation implements Calculation, SugarInfluence {
     const ys = xs.map((x) => this.getActivityLevel(x));
     return { xs, ys };
   }
-
+  public getObValue(tick: number) {
+    if (tick < this.startTick) return 0;
+    if (tick > this.startTick + this.durationTicks) return 0;
+    return this.carbsCount - this.getActivityDelta(this.startTick, tick);
+  }
   public getObPlot(xs: Axis) {
-    const ys = xs.map((x) => this.carbsCount - this.getActivityDelta(this.startTick, x));
+    const ys = xs.map((x) => this.getObValue(x));
     return { xs, ys };
   }
 }

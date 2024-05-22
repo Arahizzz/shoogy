@@ -1,4 +1,4 @@
-import { Activity, populateActivity } from '~/core/models/activity';
+import { Activity, populateInjection, populateMeal } from '~/core/models/activity';
 import {
   combineLatest,
   combineLatestWith,
@@ -9,22 +9,32 @@ import {
   switchMap,
 } from 'rxjs';
 import { editScreenSeries } from '~/core/chart/series';
-import { initializeCalculation } from '~/core/calculations';
 import { calculatePredictionPlot } from '~/core/chart/index';
-import { activeProfile$, currentSugarValue$ } from '~/core/chart/data';
+import { activeProfile$, currentSugarValue$ } from '~/core/calculations/data';
+import { MealCalculation } from '~/core/calculations/meal';
+import { InjectionCalculation } from '~/core/calculations/injection';
 
 export function editActivityChartPipeline(activites$: Observable<Activity>[]) {
   const calculations$ = combineLatest(activites$).pipe(
     defaultIfEmpty([]),
     debounceTime(300),
-    switchMap((activities) => Promise.all(activities.map(populateActivity))),
-    map((activities) => activities.map(initializeCalculation))
+    switchMap((activities) =>
+      Promise.all(
+        activities.map((a) => (a.type === 'meal' ? populateMeal(a) : populateInjection(a)))
+      )
+    ),
+    combineLatestWith(activeProfile$),
+    map(([activities, profile]) =>
+      activities.map((a) =>
+        a.type === 'meal' ? new MealCalculation(a, profile) : new InjectionCalculation(a, profile)
+      )
+    )
   );
 
   return calculations$.pipe(
-    combineLatestWith(currentSugarValue$, activeProfile$),
-    map(([activities, startSugar, profile]) => {
-      return calculatePredictionPlot(activities, startSugar, profile);
+    combineLatestWith(currentSugarValue$),
+    map(([activities, startSugar]) => {
+      return calculatePredictionPlot(activities, startSugar);
     }),
     map((data) => editScreenSeries(data))
   );

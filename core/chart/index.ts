@@ -58,8 +58,7 @@ export function getChartMarkers(
 
 export function calculatePredictionPlot(
   activities: ActivityFunction[],
-  startSugar: GlucoseEntry,
-  profile: Profile
+  startSugar: GlucoseEntry
 ): SeriesProps {
   if (activities.length === 0) {
     return {
@@ -73,7 +72,7 @@ export function calculatePredictionPlot(
   const endTick =
     Math.max(...activities.map((activity) => activity.startTick + activity.durationTicks)) + 6;
   const xs = new Float64Array(endTick - startTick).map((_, i) => incrementTick(startTick, i));
-  const activityPlot = getCombinedSugarPlot(xs, activities, startSugar.sugar, profile);
+  const activityPlot = getCombinedSugarPlot(xs, activities, startSugar.sugar);
   const markLineData = getChartMarkers(activities);
 
   return { xs, ys: activityPlot.ys, markLineData };

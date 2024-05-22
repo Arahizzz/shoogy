@@ -5,7 +5,7 @@ import {
   SeriesProps,
 } from '~/core/chart/series';
 import { calculatePredictionPlot } from '~/core/chart/index';
-import { activeProfile$, currentActivities$, currentSugarHistory$ } from '~/core/chart/data';
+import { currentActivities$, currentSugarHistory$ } from '~/core/calculations/data';
 
 const dataZoom: echarts.DataZoomComponentOption[] = [
   {
@@ -32,9 +32,9 @@ export function indexActivityChartPipeline() {
   );
 
   const prognosisPlot$ = currentActivities$.pipe(
-    combineLatestWith(currentSugarHistory$, activeProfile$),
-    map(([activities, latestSugar, profile]) => {
-      return calculatePredictionPlot(activities, latestSugar[latestSugar.length - 1], profile);
+    combineLatestWith(currentSugarHistory$),
+    map(([activities, latestSugar]) => {
+      return calculatePredictionPlot(activities, latestSugar[latestSugar.length - 1]);
     }),
     map((data) => indexScreenPrognosisSeries(data)),
     startWith(undefined)

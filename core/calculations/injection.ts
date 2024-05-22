@@ -8,15 +8,26 @@ import { Profile } from '~/core/models/profile';
 import { ActivityPoints, PopulatedInjection } from '../models/injection';
 
 export class InjectionCalculation implements Calculation, SugarInfluence {
-  public readonly insulinAmount: number;
-  public readonly startTick: number;
+  public readonly injection: PopulatedInjection;
+  public readonly profile: Profile;
   public readonly durationTicks;
   private readonly activityCurve;
 
-  constructor({ insulinType, insulinAmount, startTick }: PopulatedInjection) {
-    const activity = insulinType.points;
-    this.insulinAmount = insulinAmount;
-    this.startTick = startTick;
+  public get startTick() {
+    return this.injection.startTick;
+  }
+  public get insulinAmount() {
+    return this.injection.insulinAmount;
+  }
+  public get insulinType() {
+    return this.injection.insulinType;
+  }
+
+  constructor(injection: PopulatedInjection, profile: Profile) {
+    this.injection = injection;
+    this.profile = profile;
+
+    const activity = this.insulinType.points;
     this.durationTicks = activity[activity.length - 1].tick;
     this.activityCurve = this.initActivityCurve(activity);
   }
@@ -30,8 +41,8 @@ export class InjectionCalculation implements Calculation, SugarInfluence {
     if (toTick > this.startTick + this.durationTicks) toTick = this.startTick + this.durationTicks;
     return integrate(this.activityCurve, fromTick, toTick, 1e-5, 30);
   }
-  getSugarDelta(fromTick: number, toTick: number, profile: Profile): number {
-    return -profile.insulinSensitivity * this.getActivityDelta(fromTick, toTick);
+  getSugarDelta(fromTick: number, toTick: number): number {
+    return -this.profile.insulinSensitivity * this.getActivityDelta(fromTick, toTick);
   }
 
   private initActivityCurve(activity: ActivityPoints[]) {
@@ -53,8 +64,14 @@ export class InjectionCalculation implements Calculation, SugarInfluence {
     return { xs, ys };
   }
 
+  public getObValue(tick: number) {
+    if (tick < this.startTick) return 0;
+    if (tick > this.startTick + this.durationTicks) return 0;
+    return this.insulinAmount - this.getActivityDelta(this.startTick, tick);
+  }
+
   public getObPlot(xs: Axis) {
-    const ys = xs.map((x) => this.insulinAmount - this.getActivityDelta(this.startTick, x));
+    const ys = xs.map((x) => this.getObValue(x));
     return { xs, ys };
   }
 }
