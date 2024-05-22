@@ -26,8 +26,8 @@ import { Injection } from '~/core/models/injection';
 import { Meal } from '~/core/models/meal';
 import { linkNext } from '~/core/rxjs';
 import { decrementTick, getCurrentTick } from '~/core/time';
-import { newId } from '~/core/utils';
 import { db } from '~/core/db';
+import { nanoid } from 'nanoid';
 
 class ActivityStore {
   public activitiesState$ = new BehaviorSubject<BehaviorSubject<Activity>[]>([]);
@@ -69,7 +69,7 @@ class ActivityStore {
 
   newActivity(activityProps: Omit<Meal, 'id'> | Omit<Injection, 'id'>) {
     const activity$ = new BehaviorSubject<Activity>({
-      id: newId(),
+      id: nanoid(),
       ...activityProps,
     });
     this.activitiesState$.next([...this.activitiesState$.value, activity$]);

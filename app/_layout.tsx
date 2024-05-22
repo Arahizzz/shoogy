@@ -49,5 +49,5 @@ export default function RootLayout() {
 }
 
 async function initAppAsync() {
-  await initDb();
+  await initDb;
 }

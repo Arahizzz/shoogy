@@ -17,7 +17,7 @@ import {
 } from '@tamagui/lucide-icons';
 import { IconProps } from '@tamagui/helpers-icon';
 import IndexActivityChart from '~/components/index-activity-chart';
-import { db } from '~/core/db';
+import { currentSugarValue$ } from '~/core/chart/data';
 
 export default function CombinedScreen() {
   useSubscription(glucoseFetchWorker);
@@ -34,19 +34,9 @@ export default function CombinedScreen() {
 }
 
 function CurrentGlucose() {
-  const [bloodGlucose] = useObservableState(
-    () =>
-      db.glucose_entries.find({
-        sort: [{ date: 'desc' }],
-        limit: 1,
-      }).$,
-    []
-  );
-  console.log(bloodGlucose);
+  const [currentGlucose] = useObservableState(() => currentSugarValue$, undefined);
 
-  if (!bloodGlucose.length) return <></>;
-
-  const currentGlucose = bloodGlucose[0];
+  if (!currentGlucose) return <></>;
 
   return (
     <XStack gap={10} alignItems={'stretch'}>

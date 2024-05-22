@@ -3,11 +3,12 @@ import { Link } from 'expo-router';
 import { useObservableState } from 'observable-hooks/src';
 import { Button, Card, RadioGroup, Text, View, YStack } from 'tamagui';
 import { db } from '~/core/db';
+import { nanoid } from 'nanoid';
 
 export default function ProfileScreen() {
   const addProfile = async () => {
     await db.profiles.insert({
-      id: 'p' + Date.now(),
+      id: nanoid(),
       name: 'New Profile',
       carbSensitivity: 10,
       insulinSensitivity: 10,

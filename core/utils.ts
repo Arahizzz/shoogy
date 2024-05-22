@@ -1,11 +1,8 @@
 import { useObservableState } from 'observable-hooks';
 import { distinctUntilChanged, map, merge, Observable, OperatorFunction, pipe } from 'rxjs';
+import { RxDocument } from 'rxdb/src/types';
 export function isDefined<T>(obj: T): obj is NonNullable<T> {
   return !!obj;
-}
-
-export function newId(): string {
-  return 'p' + Date.now();
 }
 
 export function throwIfNull<T>(): OperatorFunction<T, NonNullable<T>> {
@@ -17,6 +14,21 @@ export function throwIfNull<T>(): OperatorFunction<T, NonNullable<T>> {
       return value;
     })
   );
+}
+
+export function mapArray<T, U>(fn: (value: T) => U): OperatorFunction<T[], U[]> {
+  return pipe(
+    map((arr) => {
+      return arr.map(fn);
+    })
+  );
+}
+
+export function unwrapDoc<T>(doc: RxDocument<T> | null): T {
+  if (!doc) {
+    throw new Error('Document is null');
+  }
+  return doc._data;
 }
 
 export function useStateFromObservable<T>(

@@ -44,7 +44,7 @@ const seedData = async () => {
   await db.states.profile_settings.set('selectedProfileId', (_) => defaultProfile.id);
 };
 
-export async function initDb() {
+export const initDb = (async () => {
   const name = 'shoogydb';
   const storage = getRxStorageDexie({
     // @ts-ignore
@@ -78,7 +78,9 @@ export async function initDb() {
   db = dbInstance as unknown as Database;
 
   await seedData();
-}
+
+  return db;
+})();
 
 export function useObservableDoc<C extends keyof DatabaseCollections>(
   collection: C,

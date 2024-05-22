@@ -2,7 +2,11 @@ import type echarts from 'echarts';
 
 import { InjectionCalculation } from '~/core/calculations/injection';
 import { MealCalculation } from '~/core/calculations/meal';
-import { tickToTime } from '~/core/time';
+import { incrementTick, tickToTime } from '~/core/time';
+import { GlucoseEntry } from '~/core/models/glucoseEntry';
+import { Profile } from '~/core/models/profile';
+import { SeriesProps } from '~/core/chart/series';
+import { getCombinedSugarPlot } from '~/core/sugarInfluence';
 
 export type Axis = number[] | Float64Array;
 
@@ -10,6 +14,8 @@ export type Plot = {
   xs: Axis;
   ys: Axis;
 };
+
+export type ActivityFunction = MealCalculation | InjectionCalculation;
 
 export function getChartMarkers(
   activities: (MealCalculation | InjectionCalculation)[]
@@ -48,4 +54,27 @@ export function getChartMarkers(
       };
     }
   });
+}
+
+export function calculatePredictionPlot(
+  activities: ActivityFunction[],
+  startSugar: GlucoseEntry,
+  profile: Profile
+): SeriesProps {
+  if (activities.length === 0) {
+    return {
+      xs: [],
+      ys: [],
+      markLineData: [],
+    };
+  }
+
+  const startTick = startSugar.tick;
+  const endTick =
+    Math.max(...activities.map((activity) => activity.startTick + activity.durationTicks)) + 6;
+  const xs = new Float64Array(endTick - startTick).map((_, i) => incrementTick(startTick, i));
+  const activityPlot = getCombinedSugarPlot(xs, activities, startSugar.sugar, profile);
+  const markLineData = getChartMarkers(activities);
+
+  return { xs, ys: activityPlot.ys, markLineData };
 }

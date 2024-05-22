@@ -1,5 +1,5 @@
 import { HIGH_SUGAR, LOW_SUGAR } from '~/core/constants';
-import echarts, { EChartsOption } from 'echarts';
+import echarts from 'echarts';
 import { tickToTime } from '~/core/time';
 
 export type SeriesProps = {
@@ -131,7 +131,7 @@ export const indexScreenPrognosisSeries = ({
       ],
     },
     itemStyle: {
-      color: ({ data }) => {
+      color: () => {
         return 'purple';
       },
     },
