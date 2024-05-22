@@ -1,10 +1,10 @@
-import { ChevronDown, ChevronUp, Pizza, Syringe, Trash2 } from '@tamagui/lucide-icons';
+import { ChevronDown, Pizza, Syringe, Trash2 } from '@tamagui/lucide-icons';
 import { router } from 'expo-router';
 import { useObservablePickState } from 'observable-hooks';
 import { useObservableState } from 'observable-hooks/src';
 import React, { useEffect } from 'react';
 import { ColorValue } from 'react-native';
-import { BehaviorSubject, first, map, of } from 'rxjs';
+import { BehaviorSubject, first, firstValueFrom, map, of } from 'rxjs';
 import {
   Adapt,
   Button,
@@ -21,34 +21,32 @@ import {
 import EditActivityChart from '~/components/edit-activity-chart';
 import NumericInput from '~/components/numeric-input';
 import TimeInput from '~/components/time-input';
-import { Activity } from '~/core/models/activity';
+import { Activity, PopulatedActivity } from '~/core/models/activity';
 import { Injection } from '~/core/models/injection';
 import { Meal } from '~/core/models/meal';
 import { linkNext } from '~/core/rxjs';
-import { decrementTick, getCurrentTick } from '~/core/time';
+import { getCurrentTick } from '~/core/time';
 import { db } from '~/core/db';
 import { nanoid } from 'nanoid';
+import { currentInjections$, currentMeals$, twelveHoursAgoTick$ } from '~/core/calculations/data';
 
 class ActivityStore {
   public activitiesState$ = new BehaviorSubject<BehaviorSubject<Activity>[]>([]);
   public startSugar$ = new BehaviorSubject(0);
-  private toDelete: { type: 'injection' | 'meal'; id: string }[] = [];
 
   async init() {
-    // Load activities that were created in the last 12 hours
-    const now = getCurrentTick();
-    const twelveHoursAgo = decrementTick(now, (60 / 5) * 12);
+    const twelveHoursAgoTick = await firstValueFrom(twelveHoursAgoTick$);
     const meals = await db.meals
       .find({
         selector: {
-          startTick: { $gte: twelveHoursAgo },
+          startTick: { $gte: twelveHoursAgoTick },
         },
       })
       .exec();
     const injections = await db.injections
       .find({
         selector: {
-          startTick: { $gte: twelveHoursAgo },
+          startTick: { $gte: twelveHoursAgoTick },
         },
       })
       .exec();
@@ -64,7 +62,6 @@ class ActivityStore {
   dispose() {
     this.activitiesState$.next([]);
     this.startSugar$.next(0);
-    this.toDelete = [];
   }
 
   newActivity(activityProps: Omit<Meal, 'id'> | Omit<Injection, 'id'>) {
@@ -74,13 +71,22 @@ class ActivityStore {
     });
     this.activitiesState$.next([...this.activitiesState$.value, activity$]);
   }
-  removeActivity(type: 'injection' | 'meal', id: string) {
-    this.toDelete.push({ type, id });
+  removeActivity(id: string) {
     this.activitiesState$.next(
       this.activitiesState$.value.filter((activity$) => activity$.value.id !== id)
     );
   }
-  async saveActivities() {
+  async applyActivitiesDiff() {
+    const prevMeals = await firstValueFrom(currentMeals$);
+    const prevInjections = await firstValueFrom(currentInjections$);
+    const prevActivities = new Map<string, PopulatedActivity>([
+      ...prevMeals.map(({ meal }) => [meal.id, meal] as const),
+      ...prevInjections.map(({ injection }) => [injection.id, injection] as const),
+    ]);
+    const currentActivities = new Map(
+      this.activitiesState$.value.map((activity$) => [activity$.value.id, activity$.value])
+    );
+
     for (const activity$ of this.activitiesState$.value) {
       if (activity$.value.type === 'meal') {
         const meal = activity$.value as Meal;
@@ -91,12 +97,13 @@ class ActivityStore {
       }
     }
 
-    for (const { type, id } of this.toDelete) {
-      if (type === 'meal') {
-        const meal = await db.meals.findOne(id).exec();
+    for (const activity of prevActivities.values()) {
+      if (currentActivities.has(activity.id)) continue;
+      if (activity.type === 'meal') {
+        const meal = await db.meals.findOne(activity.id).exec();
         if (meal) await meal.remove();
-      } else if (type === 'injection') {
-        const injection = await db.injections.findOne(id).exec();
+      } else if (activity.type === 'insulin') {
+        const injection = await db.injections.findOne(activity.id).exec();
         if (injection) await injection.remove();
       }
     }
@@ -112,7 +119,7 @@ export default function EditActivityScreen() {
   }, []);
 
   const onSave = async () => {
-    await store.saveActivities();
+    await store.applyActivitiesDiff();
     router.back();
   };
 
@@ -213,15 +220,7 @@ function ActivityTimeEdit({
   );
 }
 
-function DeleteButton({
-  type,
-  id,
-  color,
-}: {
-  type: 'injection' | 'meal';
-  id: string;
-  color?: string;
-}) {
+function DeleteButton({ id, color }: { id: string; color?: string }) {
   return (
     <Button
       variant="outlined"
@@ -229,7 +228,7 @@ function DeleteButton({
       paddingHorizontal={5}
       height={40}
       $xs={{ height: 30 }}
-      onPress={() => store.removeActivity(type, id)}
+      onPress={() => store.removeActivity(id)}
       icon={<Trash2 color={color} size="$1" />}
     />
   );
@@ -249,7 +248,7 @@ function MealEdit({ meal$ }: { meal$: BehaviorSubject<Meal> }) {
       }}>
       <PizzaIcon />
       <XStack justifyContent="space-between">
-        <DeleteButton type={'meal'} id={meal$.value.id} color={color} />
+        <DeleteButton id={meal$.value.id} color={color} />
         <ActivityTimeEdit
           color={color}
           fontColor={fontColor}
@@ -339,7 +338,7 @@ function InsulinEdit({ insulin$ }: { insulin$: BehaviorSubject<Injection> }) {
     <ActivityEditCard backgroundColor="rgba(0, 106, 220, 0.25)">
       <SyringeIcon />
       <XStack>
-        <DeleteButton type={'injection'} id={insulin$.value.id} color={color} />
+        <DeleteButton id={insulin$.value.id} color={color} />
         <ActivityTimeEdit
           color={color}
           fontColor={fontColor}
