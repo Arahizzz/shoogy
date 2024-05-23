@@ -79,7 +79,7 @@
 
             export GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx4g";
           '';
-          runScript = "bash";
+          runScript = "\${SHELL-bash}";
         }).env;
     };
 }
