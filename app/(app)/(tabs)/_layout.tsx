@@ -24,20 +24,6 @@ export default function TabLayout() {
           tabBarIcon: (props) => <Settings color="black" size={20} />,
         }}
       />
-      <Tabs.Screen
-        name="insulin"
-        options={{
-          title: 'Insulin',
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="food"
-        options={{
-          title: 'Food',
-          href: null,
-        }}
-      />
     </Tabs>
   );
 }

@@ -4,7 +4,7 @@ import { useObservablePickState } from 'observable-hooks';
 import { useObservableState } from 'observable-hooks/src';
 import React, { useEffect } from 'react';
 import { ColorValue } from 'react-native';
-import { BehaviorSubject, first, firstValueFrom, map, of } from 'rxjs';
+import { BehaviorSubject, firstValueFrom, map, of } from 'rxjs';
 import {
   Adapt,
   Button,
@@ -21,47 +21,47 @@ import {
 import EditActivityChart from '~/components/edit-activity-chart';
 import NumericInput from '~/components/numeric-input';
 import TimeInput from '~/components/time-input';
-import { Activity, PopulatedActivity } from '~/core/models/activity';
+import { Activity } from '~/core/models/activity';
 import { Injection } from '~/core/models/injection';
 import { Meal } from '~/core/models/meal';
-import { linkNext } from '~/core/rxjs';
 import { getCurrentTick } from '~/core/time';
 import { db } from '~/core/db';
 import { nanoid } from 'nanoid';
-import { currentInjections$, currentMeals$, twelveHoursAgoTick$ } from '~/core/calculations/data';
+import { twelveHoursAgoTick$ } from '~/core/calculations/data';
+import type { MangoQuery, RxDocument } from 'rxdb/src/types';
+import { cancelActivityNotification, scheduleActivityNotification } from '~/core/notifications';
+
+export type ActivityForm = Activity & {
+  notify?: boolean;
+  toDelete?: boolean;
+};
 
 class ActivityStore {
-  public activitiesState$ = new BehaviorSubject<BehaviorSubject<Activity>[]>([]);
-  public startSugar$ = new BehaviorSubject(0);
+  public activitiesState$ = new BehaviorSubject<BehaviorSubject<ActivityForm>[]>([]);
 
   async init() {
     const twelveHoursAgoTick = await firstValueFrom(twelveHoursAgoTick$);
-    const meals = await db.meals
-      .find({
-        selector: {
-          startTick: { $gte: twelveHoursAgoTick },
-        },
-      })
-      .exec();
-    const injections = await db.injections
-      .find({
-        selector: {
-          startTick: { $gte: twelveHoursAgoTick },
-        },
-      })
-      .exec();
+    const query: MangoQuery<{ startTick: number }> = {
+      selector: {
+        startTick: { $gte: twelveHoursAgoTick },
+      },
+    };
+    const meals = await db.meals.find(query).exec();
+    const injections = await db.injections.find(query).exec();
     const activities = [...meals, ...injections]
       .sort((a, b) => a.startTick - b.startTick)
       .map(
-        (activity) => new BehaviorSubject(activity._data)
-      ) as unknown as BehaviorSubject<Activity>[];
+        (activity) =>
+          new BehaviorSubject<ActivityForm>({
+            ...activity._data,
+            notify: !!activity._data.notificationId,
+          })
+      );
 
     this.activitiesState$.next(activities);
-    of(5).pipe(first()).subscribe(linkNext(this.startSugar$));
   }
   dispose() {
     this.activitiesState$.next([]);
-    this.startSugar$.next(0);
   }
 
   newActivity(activityProps: Omit<Meal, 'id'> | Omit<Injection, 'id'>) {
@@ -71,42 +71,43 @@ class ActivityStore {
     });
     this.activitiesState$.next([...this.activitiesState$.value, activity$]);
   }
-  removeActivity(id: string) {
-    this.activitiesState$.next(
-      this.activitiesState$.value.filter((activity$) => activity$.value.id !== id)
-    );
+  async saveChanges() {
+    for (const a$ of this.activitiesState$.value) {
+      const activity = a$.value;
+      const collection = activity.type === 'meal' ? db.meals : db.injections;
+      const doc = await collection.findOne(activity.id).exec();
+
+      if (activity.toDelete) {
+        if (doc) {
+          await doc.remove();
+          if (doc.notificationId) await cancelActivityNotification(doc);
+        }
+      } else {
+        await this.refreshNotificationState(activity, doc);
+        // @ts-ignore
+        await collection.upsert(activity);
+      }
+    }
   }
-  async applyActivitiesDiff() {
-    const prevMeals = await firstValueFrom(currentMeals$);
-    const prevInjections = await firstValueFrom(currentInjections$);
-    const prevActivities = new Map<string, PopulatedActivity>([
-      ...prevMeals.map(({ meal }) => [meal.id, meal] as const),
-      ...prevInjections.map(({ injection }) => [injection.id, injection] as const),
-    ]);
-    const currentActivities = new Map(
-      this.activitiesState$.value.map((activity$) => [activity$.value.id, activity$.value])
-    );
 
-    for (const activity$ of this.activitiesState$.value) {
-      if (activity$.value.type === 'meal') {
-        const meal = activity$.value as Meal;
-        await db.meals.upsert(meal);
-      } else if (activity$.value.type === 'insulin') {
-        const injection = activity$.value as Injection;
-        await db.injections.upsert(injection);
-      }
+  private async refreshNotificationState(
+    activity: ActivityForm,
+    prevDoc: RxDocument<Injection> | RxDocument<Meal> | null
+  ) {
+    if (
+      prevDoc &&
+      (prevDoc.notificationId !== activity.notificationId ||
+        prevDoc.startTick !== activity.startTick)
+    ) {
+      await cancelActivityNotification(prevDoc);
+      activity.notificationId = undefined;
     }
 
-    for (const activity of prevActivities.values()) {
-      if (currentActivities.has(activity.id)) continue;
-      if (activity.type === 'meal') {
-        const meal = await db.meals.findOne(activity.id).exec();
-        if (meal) await meal.remove();
-      } else if (activity.type === 'insulin') {
-        const injection = await db.injections.findOne(activity.id).exec();
-        if (injection) await injection.remove();
-      }
+    if (activity.notify && !activity.notificationId) {
+      activity.notificationId = await scheduleActivityNotification(activity);
     }
+
+    activity.notify = undefined;
   }
 }
 
@@ -119,7 +120,7 @@ export default function EditActivityScreen() {
   }, []);
 
   const onSave = async () => {
-    await store.applyActivitiesDiff();
+    await store.saveChanges();
     router.back();
   };
 
@@ -169,7 +170,7 @@ export default function EditActivityScreen() {
 }
 
 function ActivitiesEdit() {
-  const activities = useObservableState(store.activitiesState$);
+  const activities = useObservableState(store.activitiesState$, []);
 
   return (
     <YStack
@@ -186,8 +187,10 @@ function ActivitiesEdit() {
   );
 }
 
-function ActivityEdit({ activity$ }: { activity$: BehaviorSubject<Activity> }) {
-  const { type } = useObservablePickState(activity$, activity$.value, 'type');
+function ActivityEdit({ activity$ }: { activity$: BehaviorSubject<ActivityForm> }) {
+  const { type, toDelete } = useObservablePickState(activity$, activity$.value, 'type', 'toDelete');
+
+  if (toDelete) return <></>;
 
   return type === 'meal' ? (
     <MealEdit meal$={activity$ as BehaviorSubject<Meal>} />
@@ -220,7 +223,17 @@ function ActivityTimeEdit({
   );
 }
 
-function DeleteButton({ id, color }: { id: string; color?: string }) {
+function DeleteButton({
+  activity$,
+  color,
+}: {
+  activity$: BehaviorSubject<ActivityForm>;
+  color: string;
+}) {
+  const onRemove = () => {
+    activity$.next({ ...activity$.value, toDelete: true });
+  };
+
   return (
     <Button
       variant="outlined"
@@ -228,7 +241,7 @@ function DeleteButton({ id, color }: { id: string; color?: string }) {
       paddingHorizontal={5}
       height={40}
       $xs={{ height: 30 }}
-      onPress={() => store.removeActivity(id)}
+      onPress={onRemove}
       icon={<Trash2 color={color} size="$1" />}
     />
   );
@@ -248,7 +261,7 @@ function MealEdit({ meal$ }: { meal$: BehaviorSubject<Meal> }) {
       }}>
       <PizzaIcon />
       <XStack justifyContent="space-between">
-        <DeleteButton id={meal$.value.id} color={color} />
+        <DeleteButton activity$={meal$ as BehaviorSubject<ActivityForm>} color={color} />
         <ActivityTimeEdit
           color={color}
           fontColor={fontColor}
@@ -338,7 +351,7 @@ function InsulinEdit({ insulin$ }: { insulin$: BehaviorSubject<Injection> }) {
     <ActivityEditCard backgroundColor="rgba(0, 106, 220, 0.25)">
       <SyringeIcon />
       <XStack>
-        <DeleteButton id={insulin$.value.id} color={color} />
+        <DeleteButton activity$={insulin$ as BehaviorSubject<ActivityForm>} color={color} />
         <ActivityTimeEdit
           color={color}
           fontColor={fontColor}

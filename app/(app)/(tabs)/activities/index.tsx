@@ -27,7 +27,7 @@ export default function CombinedScreen() {
       <CurrentGlucose />
       <IndexActivityChart />
       <Link href="/(tabs)/activities/edit" asChild>
-        <Button maxWidth="250px">New Activity</Button>
+        <Button maxWidth="250px">Manage Activities</Button>
       </Link>
     </YStack>
   );

@@ -13,6 +13,7 @@ export type Meal = {
   carbsCount: number;
   mealType: string;
   startTick: number;
+  notificationId?: string;
 };
 
 export type PopulatedMeal = Omit<Meal, 'mealType'> & { mealType: MealType };

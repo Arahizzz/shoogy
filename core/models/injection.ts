@@ -6,6 +6,7 @@ export type Injection = {
   insulinType: string;
   insulinAmount: number;
   startTick: number;
+  notificationId?: string;
 };
 
 export type ActivityPoints = {

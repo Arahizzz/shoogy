@@ -13,11 +13,13 @@ import { calculatePredictionPlot } from '~/core/chart/index';
 import { activeProfile$, currentSugarValue$ } from '~/core/calculations/data';
 import { MealCalculation } from '~/core/calculations/meal';
 import { InjectionCalculation } from '~/core/calculations/injection';
+import { ActivityForm } from '~/app/(app)/(tabs)/activities/edit';
 
-export function editActivityChartPipeline(activites$: Observable<Activity>[]) {
+export function editActivityChartPipeline(activites$: Observable<ActivityForm>[]) {
   const calculations$ = combineLatest(activites$).pipe(
     defaultIfEmpty([]),
     debounceTime(300),
+    map((activities) => activities.filter((a) => !a.toDelete)),
     switchMap((activities) =>
       Promise.all(
         activities.map((a) => (a.type === 'meal' ? populateMeal(a) : populateInjection(a)))

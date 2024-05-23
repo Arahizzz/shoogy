@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.0",
+    "@notifee/react-native": "^7.8.2",
     "@op-engineering/op-sqlite": "^6.0.1",
     "@react-navigation/native": "^6.1.17",
     "@shopify/react-native-skia": "1.2.3",
