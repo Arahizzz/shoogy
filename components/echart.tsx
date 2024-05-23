@@ -1,4 +1,4 @@
-import { SkiaChart, SVGRenderer } from '@wuba/react-native-echarts';
+import { SvgChart, SVGRenderer } from '@wuba/react-native-echarts';
 import { EChartsOption } from 'echarts';
 import { LineChart, ScatterChart } from 'echarts/charts';
 import {
@@ -56,7 +56,7 @@ export default function EchartComponent(props: Props) {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <SkiaChart useRNGH ref={ref} />
+      <SvgChart useRNGH ref={ref} />
     </GestureHandlerRootView>
   );
 }
