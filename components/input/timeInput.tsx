@@ -5,9 +5,9 @@ import React, { useState } from 'react';
 import { ColorValue } from 'react-native';
 import { merge, Observable, of, PartialObserver } from 'rxjs';
 
-import { SmallNumericInput, Stepper, StepperWrapper } from './numeric-input';
+import { SmallNumericInput, Stepper, StepperWrapper } from './numericInput';
 
-import { useObservableInput, validationError } from '~/components/observable-input';
+import { useObservableInput, validationError } from '~/components/input/observableInput';
 import { decrementTick, getCurrentTick, incrementTick, tickToTime, timeToTick } from '~/core/time';
 
 export type ValidationState = Record<string, string>;

@@ -18,9 +18,9 @@ import {
   YStack,
 } from 'tamagui';
 
-import EditActivityChart from '~/components/edit-activity-chart';
-import NumericInput from '~/components/numeric-input';
-import TimeInput from '~/components/time-input';
+import EditActivityChart from '~/components/chart/edit-activity-chart';
+import NumericInput from '~/components/input/numericInput';
+import TimeInput from '~/components/input/timeInput';
 import { Activity } from '~/core/models/activity';
 import { Injection } from '~/core/models/injection';
 import { Meal } from '~/core/models/meal';

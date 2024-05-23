@@ -1,6 +1,6 @@
 import { Observable, of, switchMap, tap } from 'rxjs';
 
-import ScatterChart from '~/components/scatter-chart';
+import ScatterChart from '~/components/chart/scatter-chart';
 import { Activity } from '~/core/models/activity';
 import { useObservable } from 'observable-hooks';
 import { editActivityChartPipeline } from '~/core/chart/editActivityChart';

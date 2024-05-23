@@ -4,7 +4,7 @@ import { ColorValue } from 'react-native';
 import { first, merge, Observable, PartialObserver } from 'rxjs';
 import { Button, Input, styled, Text, XGroup } from 'tamagui';
 
-import { useObservableInput, validationError } from '~/components/observable-input';
+import { useObservableInput, validationError } from '~/components/input/observableInput';
 
 export type ValidationState = Record<string, string>;
 

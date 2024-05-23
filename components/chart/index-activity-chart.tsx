@@ -1,4 +1,4 @@
-import ScatterChart from '~/components/scatter-chart';
+import ScatterChart from '~/components/chart/scatter-chart';
 import { indexActivityChartPipeline } from '~/core/chart/indexActivityChart';
 import { useState } from 'react';
 

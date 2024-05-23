@@ -3,7 +3,7 @@ import { useObservableState } from 'observable-hooks/src';
 import { Mask, useMaskedInputProps } from 'react-native-mask-input';
 import { filter, map, merge, Observable, PartialObserver, share } from 'rxjs';
 
-import { ValidationState } from '~/components/numeric-input';
+import { ValidationState } from '~/components/input/numericInput';
 
 type ObservableInputProps<T, TId extends string> = {
   id: TId;

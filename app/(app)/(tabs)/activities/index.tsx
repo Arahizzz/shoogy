@@ -16,7 +16,7 @@ import {
   ShieldQuestion,
 } from '@tamagui/lucide-icons';
 import { IconProps } from '@tamagui/helpers-icon';
-import IndexActivityChart from '~/components/index-activity-chart';
+import IndexActivityChart from '~/components/chart/index-activity-chart';
 import { currentCob$, currentIob$, currentSugarValue$ } from '~/core/calculations/data';
 
 export default function CombinedScreen() {
