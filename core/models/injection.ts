@@ -87,6 +87,9 @@ export const injectionSchema: RxJsonSchema<Injection> = {
     startTick: {
       type: 'number',
     },
+    notificationId: {
+      type: 'string',
+    },
   },
   primaryKey: 'id',
   required: ['id', 'type', 'insulinType', 'insulinAmount', 'startTick'],

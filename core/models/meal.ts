@@ -66,6 +66,9 @@ export const mealSchema: RxJsonSchema<Meal> = {
     startTick: {
       type: 'number',
     },
+    notificationId: {
+      type: 'string',
+    },
   },
   primaryKey: 'id',
   required: ['id', 'type', 'carbsCount', 'mealType', 'startTick'],
