@@ -5,11 +5,12 @@ import { StyleSheet } from 'react-native';
 export default function TabLayout() {
   return (
     <Tabs
+      detachInactiveScreens={false}
       screenOptions={{
         tabBarActiveTintColor: 'black',
       }}>
       <Tabs.Screen
-        name="activities"
+        name={'activities'}
         options={{
           title: 'Activities',
           headerShown: false,
@@ -17,7 +18,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="settings"
+        name={'settings'}
         options={{
           title: 'Settings',
           headerShown: false,
