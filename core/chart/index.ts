@@ -4,7 +4,6 @@ import { InjectionCalculation } from '~/core/calculations/injection';
 import { MealCalculation } from '~/core/calculations/meal';
 import { incrementTick, tickToTime } from '~/core/time';
 import { GlucoseEntry } from '~/core/models/glucoseEntry';
-import { Profile } from '~/core/models/profile';
 import { SeriesProps } from '~/core/chart/series';
 import { getCombinedSugarPlot } from '~/core/sugarInfluence';
 
@@ -28,10 +27,10 @@ export function getChartMarkers(
         label: {
           formatter: `${activity.carbsCount}g`,
           distance: 20,
-          color: 'hsl(24, 100%, 46.5%)',
+          color: 'orange',
         },
         itemStyle: {
-          color: 'hsl(24, 100%, 46.5%)',
+          color: 'orange',
         },
         lineStyle: {
           width: 0,
@@ -43,10 +42,10 @@ export function getChartMarkers(
         xAxis: tickToTime(activity.startTick),
         label: {
           formatter: `${activity.insulinAmount}U`,
-          color: 'hsl(208, 100%, 47.3%)',
+          color: 'blue',
         },
         itemStyle: {
-          color: 'hsl(208, 100%, 47.3%)',
+          color: 'blue',
         },
         lineStyle: {
           width: 0,
