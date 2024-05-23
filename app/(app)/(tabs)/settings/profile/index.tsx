@@ -1,14 +1,14 @@
 import { ChevronRight } from '@tamagui/lucide-icons';
 import { Link } from 'expo-router';
 import { useObservableState } from 'observable-hooks/src';
-import { Button, Card, RadioGroup, Text, View, YStack } from 'tamagui';
+import { Button, Card, RadioGroup, Text, View } from 'tamagui';
 import { db } from '~/core/db';
-import { nanoid } from 'nanoid';
+import { uuidv4 } from '@firebase/util';
 
 export default function ProfileScreen() {
   const addProfile = async () => {
     await db.profiles.insert({
-      id: nanoid(),
+      id: uuidv4(),
       name: 'New Profile',
       carbSensitivity: 10,
       insulinSensitivity: 10,

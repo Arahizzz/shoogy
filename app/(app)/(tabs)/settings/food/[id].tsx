@@ -6,8 +6,8 @@ import NumericInput from '~/components/numeric-input';
 import { isDefined } from '~/core/utils';
 import { useObservable, useObservableState } from 'observable-hooks';
 import { MealType } from '~/core/models/meal';
-import { nanoid } from 'nanoid';
 import { db } from '~/core/db';
+import { uuidv4 } from '@firebase/util';
 
 type QueryParams = {
   id: string;
@@ -34,7 +34,7 @@ export default function EditFoodScreen() {
     if (!doc) {
       db.meal_types.insert({
         ...meal,
-        id: nanoid(),
+        id: uuidv4(),
       });
     } else {
       await doc.patch(meal);

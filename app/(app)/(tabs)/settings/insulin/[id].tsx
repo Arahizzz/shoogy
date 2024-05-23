@@ -5,11 +5,11 @@ import { Button, Form, Input, styled, Text, XStack, YStack } from 'tamagui';
 import NumericInput from '~/components/numeric-input';
 import { isDefined } from '~/core/utils';
 import { useObservable, useObservableState } from 'observable-hooks';
-import { nanoid } from 'nanoid';
 import { InsulinType } from '~/core/models/injection';
 import { Plus, Trash2 } from '@tamagui/lucide-icons';
 import React from 'react';
 import { db } from '~/core/db';
+import { uuidv4 } from '@firebase/util';
 
 type QueryParams = {
   id: string;
@@ -40,7 +40,7 @@ export default function EditInsulinScreen() {
     if (!doc) {
       db.insulin_types.insert({
         ...insulin,
-        id: nanoid(),
+        id: uuidv4(),
       });
     } else {
       await doc.patch(insulin);

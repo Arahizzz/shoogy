@@ -26,10 +26,10 @@ import { Injection } from '~/core/models/injection';
 import { Meal } from '~/core/models/meal';
 import { getCurrentTick } from '~/core/time';
 import { db } from '~/core/db';
-import { nanoid } from 'nanoid';
 import { twelveHoursAgoTick$ } from '~/core/calculations/data';
 import type { MangoQuery, RxDocument } from 'rxdb/src/types';
 import { cancelActivityNotification, scheduleActivityNotification } from '~/core/notifications';
+import { uuidv4 } from '@firebase/util';
 
 export type ActivityForm = Activity & {
   notify?: boolean;
@@ -66,7 +66,7 @@ class ActivityStore {
 
   newActivity(activityProps: Omit<Meal, 'id'> | Omit<Injection, 'id'>) {
     const activity$ = new BehaviorSubject<Activity>({
-      id: nanoid(),
+      id: uuidv4(),
       ...activityProps,
     });
     this.activitiesState$.next([...this.activitiesState$.value, activity$]);
