@@ -23,7 +23,7 @@ class ExpoSecureLoginManager implements LoginManager {
   }
 
   async login(credentials: NigtscoutCredentials): Promise<void> {
-    await SecureStore.setItemAsync('nightscout-api', JSON.stringify(credentials.token));
+    await SecureStore.setItemAsync('nightscout-api', JSON.stringify(credentials));
     this.loginStatus.next(credentials);
   }
 
