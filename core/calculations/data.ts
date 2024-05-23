@@ -14,13 +14,15 @@ import { getCurrentTick, timeToTick } from '~/core/time';
 import { MealCalculation } from '~/core/calculations/meal';
 import { InjectionCalculation } from '~/core/calculations/injection';
 import { mapArray, throwIfNull } from '~/core/rxjs';
-import { unwrapDoc } from '~/core/utils';
+import { isDefined, unwrapDoc } from '~/core/utils';
 
 export const activeProfile$ = from(initDb).pipe(
   switchMap((db) =>
     db.states.profile_settings.selectedProfileId$.pipe(
       throwIfNull(),
-      switchMap((id) => db.profiles.findOne(id).exec().then(unwrapDoc)),
+      switchMap((id) => db.profiles.findOne(id).exec()),
+      filter(isDefined),
+      map(unwrapDoc),
       shareReplay(1)
     )
   )
@@ -40,6 +42,7 @@ export const currentSugarValue$ = from(initDb).pipe(
         sort: [{ date: 'desc' }],
       }).$
   ),
+  filter(isDefined),
   map(unwrapDoc),
   shareReplay(1)
 );
