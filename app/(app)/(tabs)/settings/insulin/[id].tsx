@@ -1,50 +1,55 @@
 import { useLocalSearchParams, useNavigation } from 'expo-router';
-import { filter, merge, of } from 'rxjs';
-import { Button, Form, Input, styled, Text, XStack, YStack } from 'tamagui';
+import { defer, filter, iif, map, merge, of, shareReplay } from 'rxjs';
+import { Button, Form, Input, XStack, YStack } from 'tamagui';
 
-import NumericInput from '~/components/numeric-input';
-import { isDefined } from '~/core/utils';
+import NumericInput from '~/components/input/numericInput';
+import { isDefined, unwrapDoc } from '~/core/utils';
 import { useObservable, useObservableState } from 'observable-hooks';
 import { InsulinType } from '~/core/models/injection';
 import { Plus, Trash2 } from '@tamagui/lucide-icons';
 import React from 'react';
 import { db } from '~/core/db';
 import { uuidv4 } from '@firebase/util';
+import { FormLabel, FormRow } from '~/components/input/form';
 
 type QueryParams = {
   id: string;
 };
-type InsulinTypeForm = Omit<InsulinType, 'id'>;
 
-const initialMealTypeForm: InsulinTypeForm = {
-  name: '',
-  points: [
-    {
-      tick: 0,
-      value: 0,
-    },
-  ],
-};
+const initialInsulinTypeForm = () =>
+  of<InsulinType>({
+    id: uuidv4(),
+    name: '',
+    points: [
+      {
+        tick: 0,
+        value: 0,
+      },
+    ],
+  });
 
 export default function EditInsulinScreen() {
   const navigation = useNavigation();
   const { id } = useLocalSearchParams<QueryParams>();
 
-  const insulinInit$ = useObservable(() => db.insulin_types.findOne(id).$);
-  const [insulin, setInsulin] = useObservableState<InsulinTypeForm>(
-    (input$) => merge(input$, insulinInit$.pipe(filter(isDefined))),
-    initialMealTypeForm
+  const insulinInit$ = useObservable(() =>
+    iif(
+      () => id === 'new',
+      defer(initialInsulinTypeForm),
+      db.insulin_types
+        .findOne(id)
+        .$.pipe(filter(isDefined), map(unwrapDoc<InsulinType>))
+        .pipe(shareReplay(1))
+    )
   );
+  const [insulin, setInsulin] = useObservableState<InsulinType>((input$) =>
+    merge(input$, insulinInit$)
+  );
+
+  if (!insulin) return null;
+
   const onSubmit = async () => {
-    const doc = await db.insulin_types.findOne(id).exec();
-    if (!doc) {
-      db.insulin_types.insert({
-        ...insulin,
-        id: uuidv4(),
-      });
-    } else {
-      await doc.patch(insulin);
-    }
+    await db.insulin_types.upsert(insulin);
     navigation.goBack();
   };
   const onRemove = async () => {
@@ -103,11 +108,11 @@ export default function EditInsulinScreen() {
         maxWidth={400}
         gap="$2">
         <FormRow>
-          <Label>Name</Label>
+          <FormLabel>Name</FormLabel>
           <Input value={insulin.name} onChangeText={setName} />
         </FormRow>
         <XStack>
-          <Label>Points:</Label>
+          <FormLabel>Points:</FormLabel>
           <Button
             variant="outlined"
             borderColor={undefined}
@@ -142,7 +147,7 @@ export default function EditInsulinScreen() {
               borderColor={undefined}
               paddingHorizontal={5}
               height={40}
-              $xs={{ height: 30 }}
+              $xs={{ height: 20 }}
               onPress={() => removePoint(i)}
               icon={<Trash2 color={'red'} size="$1" />}
             />
@@ -153,20 +158,12 @@ export default function EditInsulinScreen() {
         </Form.Trigger>
         {id && id !== 'new' && (
           <Form.Trigger asChild>
-            <Button onPress={onRemove}>Remove</Button>
+            <Button backgroundColor={'red'} onPress={onRemove}>
+              Remove
+            </Button>
           </Form.Trigger>
         )}
       </Form>
     </YStack>
   );
 }
-
-const FormRow = styled(XStack, {
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  gap: 10,
-});
-
-const Label = styled(Text, {
-  color: 'black',
-});

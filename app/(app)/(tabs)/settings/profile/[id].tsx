@@ -1,34 +1,63 @@
 import { useLocalSearchParams, useNavigation } from 'expo-router';
-import { firstValueFrom } from 'rxjs';
-import { Button, Form, Input, styled, Text, XStack } from 'tamagui';
+import { defer, filter, iif, map, merge, of, shareReplay } from 'rxjs';
+import { Button, Form, Input } from 'tamagui';
 
-import NumericInput from '~/components/numeric-input';
-import { useObservableDoc } from '~/core/db';
-import {
-  useGetObservableProperty,
-  useStateFromObservable,
-  useStateFromObservableAndInitial,
-} from '~/core/rxjs';
+import NumericInput from '~/components/input/numericInput';
+import { db } from '~/core/db';
+import { FormLabel, FormRow } from '~/components/input/form';
+import React from 'react';
+import { useObservable, useObservableState } from 'observable-hooks';
+import { isDefined, unwrapDoc } from '~/core/utils';
+import { Profile } from '~/core/models/profile';
+import { uuidv4 } from '@firebase/util';
+
+const initialProfileForm = () =>
+  of<Profile>({
+    id: uuidv4(),
+    name: '',
+    insulinSensitivity: 3,
+    carbSensitivity: 3,
+    insulinType: 'Apidra',
+  });
 
 export default function EditProfileScreen() {
   const navigation = useNavigation();
-  const { id } = useLocalSearchParams();
-  const profile$ = useObservableDoc('profiles', id as string);
-  const name$ = useGetObservableProperty(profile$, 'name');
-  const insulinSensitivity$ = useGetObservableProperty(profile$, 'insulinSensitivity');
-  const carbSensitivity$ = useGetObservableProperty(profile$, 'carbSensitivity');
-  const [insulinSensitivity, setInsulinSensitivity] = useStateFromObservable(insulinSensitivity$);
-  const [carbSensitivity, setCarbSensitivity] = useStateFromObservable(carbSensitivity$);
-  const [name, setName] = useStateFromObservableAndInitial(name$, '');
+  const { id } = useLocalSearchParams<{ id: string }>();
+
+  const profileInit$ = useObservable(() =>
+    iif(
+      () => id === 'new',
+      defer(initialProfileForm),
+      db.profiles
+        .findOne(id)
+        .$.pipe(filter(isDefined), map(unwrapDoc<Profile>))
+        .pipe(shareReplay(1))
+    )
+  );
+  const [profile, setProfile] = useObservableState<Profile>((input$) =>
+    merge(input$, profileInit$)
+  );
+
+  if (!profile) return null;
+
   const onSubmit = async () => {
-    const doc = await firstValueFrom(profile$);
-    await doc.patch({
-      insulinSensitivity,
-      carbSensitivity,
-      name,
-    });
+    await db.profiles.upsert(profile);
     navigation.goBack();
   };
+
+  const onRemove = async () => {
+    const doc = await db.profiles.findOne(id).exec();
+    if (doc) {
+      await doc.remove();
+    }
+    navigation.goBack();
+  };
+
+  const setName = (name: string) => setProfile({ ...profile, name });
+  const setInsulinSensitivity = (insulinSensitivity: number) =>
+    setProfile({ ...profile, insulinSensitivity });
+  const setCarbSensitivity = (carbSensitivity: number) =>
+    setProfile({ ...profile, carbSensitivity });
 
   return (
     <Form
@@ -40,15 +69,15 @@ export default function EditProfileScreen() {
       maxWidth={400}
       gap="$2">
       <FormRow>
-        <Label>Name</Label>
-        <Input value={name} onChangeText={setName} />
+        <FormLabel>Name</FormLabel>
+        <Input value={profile.name} onChangeText={setName} />
       </FormRow>
       <FormRow>
-        <Label>Insulin Sensitivity</Label>
+        <FormLabel>Insulin Sensitivity</FormLabel>
         <NumericInput
           id="insulin-sensitivity"
           min={0}
-          initialValue={insulinSensitivity$}
+          initialValue={profileInit$.pipe(map((p) => p.insulinSensitivity))}
           step={0.1}
           $changes={{
             next: setInsulinSensitivity,
@@ -56,11 +85,11 @@ export default function EditProfileScreen() {
         />
       </FormRow>
       <FormRow>
-        <Label>Carb Sensitivity</Label>
+        <FormLabel>Carb Sensitivity</FormLabel>
         <NumericInput
           id="carb-sensitivity"
           min={0}
-          initialValue={carbSensitivity$}
+          initialValue={profileInit$.pipe(map((p) => p.carbSensitivity))}
           step={0.5}
           $changes={{
             next: setCarbSensitivity,
@@ -70,16 +99,11 @@ export default function EditProfileScreen() {
       <Form.Trigger asChild>
         <Button onPress={onSubmit}>Save</Button>
       </Form.Trigger>
+      <Form.Trigger asChild>
+        <Button backgroundColor={'red'} onPress={onRemove}>
+          Remove
+        </Button>
+      </Form.Trigger>
     </Form>
   );
 }
-
-const FormRow = styled(XStack, {
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  gap: 10,
-});
-
-const Label = styled(Text, {
-  color: 'black',
-});

@@ -1,44 +1,44 @@
 import { useLocalSearchParams, useNavigation } from 'expo-router';
-import { filter, map, merge } from 'rxjs';
-import { Button, Form, Input, styled, Text, XStack } from 'tamagui';
+import { defer, filter, iif, map, merge, of, shareReplay } from 'rxjs';
+import { Button, Form, Input } from 'tamagui';
 
-import NumericInput from '~/components/numeric-input';
-import { isDefined } from '~/core/utils';
+import NumericInput from '~/components/input/numericInput';
+import { isDefined, unwrapDoc } from '~/core/utils';
 import { useObservable, useObservableState } from 'observable-hooks';
 import { MealType } from '~/core/models/meal';
 import { db } from '~/core/db';
 import { uuidv4 } from '@firebase/util';
+import { FormLabel, FormRow } from '~/components/input/form';
 
 type QueryParams = {
   id: string;
 };
-type MealTypeForm = Omit<MealType, 'id'>;
 
-const initialMealTypeForm: MealTypeForm = {
-  name: '',
-  digestedPercentage: 100,
-  carbsAbsorptionRatePerHr: 20,
-};
+const initialMealTypeForm = () =>
+  of<MealType>({
+    id: uuidv4(),
+    name: '',
+    digestedPercentage: 100,
+    carbsAbsorptionRatePerHr: 20,
+  });
 
 export default function EditFoodScreen() {
   const navigation = useNavigation();
   const { id } = useLocalSearchParams<QueryParams>();
 
-  const mealInit$ = useObservable(() => db.meal_types.findOne(id).$);
-  const [meal, setMeal] = useObservableState<MealTypeForm>(
-    (input$) => merge(input$, mealInit$.pipe(filter(isDefined))),
-    initialMealTypeForm
+  const mealInit$ = useObservable(() =>
+    iif(
+      () => id === 'new',
+      defer(initialMealTypeForm),
+      db.meal_types.findOne(id).$.pipe(filter(isDefined), map(unwrapDoc<MealType>))
+    ).pipe(shareReplay(1))
   );
+  const [meal, setMeal] = useObservableState<MealType>((input$) => merge(input$, mealInit$));
+
+  if (!meal) return null;
+
   const onSubmit = async () => {
-    const doc = await db.meal_types.findOne(id).exec();
-    if (!doc) {
-      db.meal_types.insert({
-        ...meal,
-        id: uuidv4(),
-      });
-    } else {
-      await doc.patch(meal);
-    }
+    await db.meal_types.upsert(meal);
     navigation.goBack();
   };
   const onRemove = async () => {
@@ -61,21 +61,19 @@ export default function EditFoodScreen() {
       onSubmit={() => {}}
       alignItems="stretch"
       alignSelf="center"
-      minWidth={200}
+      width={'90%'}
       maxWidth={400}
       gap="$2">
       <FormRow>
-        <Label>Name</Label>
-        <Input value={meal.name ?? ''} onChangeText={setName} />
+        <FormLabel>Name</FormLabel>
+        <Input value={meal.name} onChangeText={setName} />
       </FormRow>
       <FormRow>
-        <Label>Digested Percentage</Label>
+        <FormLabel>Digested Percentage</FormLabel>
         <NumericInput
           id="digested-percentage"
           min={0}
-          initialValue={mealInit$.pipe(
-            map((m) => (m ? m.digestedPercentage : initialMealTypeForm.digestedPercentage))
-          )}
+          initialValue={mealInit$.pipe(map((m) => m.digestedPercentage))}
           step={1}
           $changes={{
             next: setDigestedPercentage,
@@ -83,15 +81,11 @@ export default function EditFoodScreen() {
         />
       </FormRow>
       <FormRow>
-        <Label>Carbs Absorption Rate Per Hour</Label>
+        <FormLabel>Carbs Absorption Rate</FormLabel>
         <NumericInput
           id="carbs-absorption-rate-per-hr"
           min={0}
-          initialValue={mealInit$.pipe(
-            map((m) =>
-              m ? m.carbsAbsorptionRatePerHr : initialMealTypeForm.carbsAbsorptionRatePerHr
-            )
-          )}
+          initialValue={mealInit$.pipe(map((m) => m.carbsAbsorptionRatePerHr))}
           step={1}
           $changes={{
             next: setCarbsAbsorptionRatePerHr,
@@ -103,19 +97,11 @@ export default function EditFoodScreen() {
       </Form.Trigger>
       {id && id !== 'new' && (
         <Form.Trigger asChild>
-          <Button onPress={onRemove}>Remove</Button>
+          <Button backgroundColor={'red'} onPress={onRemove}>
+            Remove
+          </Button>
         </Form.Trigger>
       )}
     </Form>
   );
 }
-
-const FormRow = styled(XStack, {
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  gap: 10,
-});
-
-const Label = styled(Text, {
-  color: 'black',
-});

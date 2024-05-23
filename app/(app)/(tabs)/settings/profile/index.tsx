@@ -3,18 +3,8 @@ import { Link } from 'expo-router';
 import { useObservableState } from 'observable-hooks/src';
 import { Button, Card, RadioGroup, Text, View } from 'tamagui';
 import { db } from '~/core/db';
-import { uuidv4 } from '@firebase/util';
 
 export default function ProfileScreen() {
-  const addProfile = async () => {
-    await db.profiles.insert({
-      id: uuidv4(),
-      name: 'New Profile',
-      carbSensitivity: 10,
-      insulinSensitivity: 10,
-      insulinType: 'Apidra',
-    });
-  };
   const selectProfile = (id: string) => {
     return db.states.profile_settings.set('selectedProfileId', (_) => id);
   };
@@ -28,11 +18,13 @@ export default function ProfileScreen() {
       alignItems="center"
       gap={5}
       marginTop={10}>
-      <Button onPress={addProfile}>
-        <Text>New Profile</Text>
-      </Button>
+      <Link href={{ pathname: '/(tabs)/settings/profile/[id]', params: { id: 'new' } }} asChild>
+        <Button>
+          <Text>New Profile</Text>
+        </Button>
+      </Link>
       {profilesList.map((profile) => (
-        <Card key={profile.id} width={400}>
+        <Card key={profile.id} maxWidth={400} width={'90%'}>
           <Card.Background
             backgroundColor="white"
             borderColor="black"
