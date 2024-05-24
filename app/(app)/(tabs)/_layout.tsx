@@ -1,4 +1,4 @@
-import { Activity, FileHeart, Settings } from '@tamagui/lucide-icons';
+import { Activity, Settings } from '@tamagui/lucide-icons';
 import { Tabs } from 'expo-router';
 import { StyleSheet } from 'react-native';
 

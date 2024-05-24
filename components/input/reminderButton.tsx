@@ -1,10 +1,9 @@
 import { BehaviorSubject } from 'rxjs';
-import { Activity } from '~/core/models/activity';
 import { useObservableState } from 'observable-hooks';
 import { Bell, BellOff } from '@tamagui/lucide-icons';
 import { Button } from 'tamagui';
-import React, { useState } from 'react';
-import { ActivityForm } from '~/app/(app)/(tabs)/activities/edit';
+import React from 'react';
+import { ActivityForm } from '~/app/(tabs)/activities/edit';
 
 export type ReminderButtonProps = {
   activity$: BehaviorSubject<ActivityForm>;

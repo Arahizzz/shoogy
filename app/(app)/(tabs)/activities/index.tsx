@@ -1,5 +1,5 @@
 import { Link } from 'expo-router';
-import { Button, Text, XStack, YStack } from 'tamagui';
+import { Button, styled, Text, XStack, YStack } from 'tamagui';
 import { glucoseFetchWorker } from '~/core/nightscout/api';
 import { useObservableState, useSubscription } from 'observable-hooks';
 import { format } from 'date-fns';
@@ -44,16 +44,17 @@ function CurrentGlucose() {
         <YStack justifyContent={'center'}>
           <GlucoseDirection direction={currentGlucose.direction} />
         </YStack>
-        <Text color={'black'} fontSize={80}>
+        <Text
+          color={'black'}
+          fontSize={80}
+          $sm={{
+            fontSize: 60,
+          }}>
           {currentGlucose.sugar.toFixed(1)}
         </Text>
         <YStack justifyContent={'space-around'}>
-          <Text color={'black'} fontSize={24}>
-            {format(currentGlucose.date, 'HH:mm')}
-          </Text>
-          <Text color={'black'} fontSize={24}>
-            mmol/L
-          </Text>
+          <AuxillaryText>{format(currentGlucose.date, 'HH:mm')}</AuxillaryText>
+          <AuxillaryText>mmol/L</AuxillaryText>
         </YStack>
       </XStack>
       <XStack justifyContent={'space-between'}>
@@ -85,7 +86,7 @@ function IobInfo() {
 
   return (
     <YStack>
-      <Text color={'black'}>IOB: {iob.toFixed(2)}U</Text>
+      <ObText>IOB: {iob.toFixed(2)}U</ObText>
     </YStack>
   );
 }
@@ -97,7 +98,19 @@ function CobInfo() {
 
   return (
     <YStack>
-      <Text color={'black'}>COB: {cob.toFixed(2)}g</Text>
+      <ObText>COB: {cob.toFixed(2)}g</ObText>
     </YStack>
   );
 }
+
+const AuxillaryText = styled(Text, {
+  color: 'black',
+  fontSize: 24,
+  $sm: {
+    fontSize: 20,
+  },
+});
+
+const ObText = styled(Text, {
+  color: 'black',
+});

@@ -11,7 +11,7 @@ SplashScreen.preventAutoHideAsync();
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(app)/(tabs)/activities',
+  initialRouteName: '/(app)/(tabs)/activities',
 };
 
 export default function RootLayout() {
@@ -40,7 +40,7 @@ export default function RootLayout() {
 
   return (
     <TamaguiProvider config={config}>
-      <Stack>
+      <Stack initialRouteName={'(app)'}>
         <Stack.Screen name="(app)" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
       </Stack>

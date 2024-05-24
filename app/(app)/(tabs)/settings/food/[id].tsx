@@ -1,14 +1,15 @@
 import { useLocalSearchParams, useNavigation } from 'expo-router';
-import { defer, filter, iif, map, merge, of, shareReplay } from 'rxjs';
-import { Button, Form, Input } from 'tamagui';
+import { defer, filter, iif, map, merge, of, shareReplay, Subject } from 'rxjs';
+import { Form, Input } from 'tamagui';
 
-import NumericInput from '~/components/input/numericInput';
-import { isDefined, unwrapDoc } from '~/core/utils';
-import { useObservable, useObservableState } from 'observable-hooks';
+import NumericInput from '../../../../../components/input/numericInput';
+import { isDefined, unwrapDoc } from '../../../../../core/utils';
+import { useObservable, useObservableState, useSubscription } from 'observable-hooks';
 import { MealType } from '~/core/models/meal';
 import { db } from '~/core/db';
 import { uuidv4 } from '@firebase/util';
 import { FormLabel, FormRow } from '~/components/input/form';
+import { confirmDelete } from '~/components/utils';
 
 type QueryParams = {
   id: string;
@@ -21,6 +22,9 @@ const initialMealTypeForm = () =>
     digestedPercentage: 100,
     carbsAbsorptionRatePerHr: 20,
   });
+
+export const $saveChanges = new Subject<void>();
+export const $remove = new Subject<void>();
 
 export default function EditFoodScreen() {
   const navigation = useNavigation();
@@ -35,19 +39,22 @@ export default function EditFoodScreen() {
   );
   const [meal, setMeal] = useObservableState<MealType>((input$) => merge(input$, mealInit$));
 
-  if (!meal) return null;
-
-  const onSubmit = async () => {
+  useSubscription($saveChanges, async () => {
+    if (!meal) return;
     await db.meal_types.upsert(meal);
     navigation.goBack();
-  };
-  const onRemove = async () => {
+  });
+
+  useSubscription($remove, async () => {
+    if (!(await confirmDelete())) return;
     const doc = await db.meal_types.findOne(id).exec();
     if (doc) {
       await doc.remove();
     }
     navigation.goBack();
-  };
+  });
+
+  if (!meal) return null;
 
   const setName = (name: string) => setMeal({ ...meal, name });
   const setDigestedPercentage = (digestedPercentage: number) =>
@@ -92,16 +99,6 @@ export default function EditFoodScreen() {
           }}
         />
       </FormRow>
-      <Form.Trigger asChild>
-        <Button onPress={onSubmit}>Save</Button>
-      </Form.Trigger>
-      {id && id !== 'new' && (
-        <Form.Trigger asChild>
-          <Button backgroundColor={'red'} onPress={onRemove}>
-            Remove
-          </Button>
-        </Form.Trigger>
-      )}
     </Form>
   );
 }

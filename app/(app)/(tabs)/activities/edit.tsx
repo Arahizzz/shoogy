@@ -113,16 +113,16 @@ class ActivityStore {
 
 const store = new ActivityStore();
 
+export const onActivitiesEditSave = async () => {
+  await store.saveChanges();
+  router.back();
+};
+
 export default function EditActivityScreen() {
   useEffect(() => {
     store.init().catch(console.error);
     return () => store.dispose();
   }, []);
-
-  const onSave = async () => {
-    await store.saveChanges();
-    router.back();
-  };
 
   return (
     <ScrollView stickyHeaderIndices={[0]}>
@@ -161,9 +161,6 @@ export default function EditActivityScreen() {
           </Button>
         </XStack>
         <ActivitiesEdit />
-        <Button width={200} onPress={onSave}>
-          <Text>Save</Text>
-        </Button>
       </YStack>
     </ScrollView>
   );

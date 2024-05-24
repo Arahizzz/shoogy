@@ -1,16 +1,17 @@
 import { useLocalSearchParams, useNavigation } from 'expo-router';
-import { defer, filter, iif, map, merge, of, shareReplay } from 'rxjs';
+import { defer, filter, iif, map, merge, of, shareReplay, Subject } from 'rxjs';
 import { Button, Form, Input, XStack, YStack } from 'tamagui';
 
 import NumericInput from '~/components/input/numericInput';
 import { isDefined, unwrapDoc } from '~/core/utils';
-import { useObservable, useObservableState } from 'observable-hooks';
+import { useObservable, useObservableState, useSubscription } from 'observable-hooks';
 import { InsulinType } from '~/core/models/injection';
 import { Plus, Trash2 } from '@tamagui/lucide-icons';
 import React from 'react';
 import { db } from '~/core/db';
 import { uuidv4 } from '@firebase/util';
 import { FormLabel, FormRow } from '~/components/input/form';
+import { confirmDelete } from '~/components/utils';
 
 type QueryParams = {
   id: string;
@@ -27,6 +28,9 @@ const initialInsulinTypeForm = () =>
       },
     ],
   });
+
+export const $saveChanges = new Subject<void>();
+export const $remove = new Subject<void>();
 
 export default function EditInsulinScreen() {
   const navigation = useNavigation();
@@ -46,19 +50,21 @@ export default function EditInsulinScreen() {
     merge(input$, insulinInit$)
   );
 
-  if (!insulin) return null;
-
-  const onSubmit = async () => {
+  useSubscription($saveChanges, async () => {
+    if (!insulin) return;
     await db.insulin_types.upsert(insulin);
     navigation.goBack();
-  };
-  const onRemove = async () => {
+  });
+  useSubscription($remove, async () => {
+    if (!(await confirmDelete())) return;
     const doc = await db.insulin_types.findOne(id).exec();
     if (doc) {
       await doc.remove();
     }
     navigation.goBack();
-  };
+  });
+
+  if (!insulin) return null;
 
   const setName = (name: string) => setInsulin({ ...insulin, name });
   const setPointTick = (index: number, value: number) => {
@@ -153,16 +159,6 @@ export default function EditInsulinScreen() {
             />
           </FormRow>
         ))}
-        <Form.Trigger asChild>
-          <Button onPress={onSubmit}>Save</Button>
-        </Form.Trigger>
-        {id && id !== 'new' && (
-          <Form.Trigger asChild>
-            <Button backgroundColor={'red'} onPress={onRemove}>
-              Remove
-            </Button>
-          </Form.Trigger>
-        )}
       </Form>
     </YStack>
   );

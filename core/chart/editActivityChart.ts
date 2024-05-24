@@ -13,7 +13,7 @@ import { calculatePredictionPlot } from '~/core/chart/index';
 import { activeProfile$, currentSugarValue$ } from '~/core/calculations/data';
 import { MealCalculation } from '~/core/calculations/meal';
 import { InjectionCalculation } from '~/core/calculations/injection';
-import { ActivityForm } from '~/app/(app)/(tabs)/activities/edit';
+import { ActivityForm } from '~/app/(tabs)/activities/edit';
 
 export function editActivityChartPipeline(activites$: Observable<ActivityForm>[]) {
   const calculations$ = combineLatest(activites$).pipe(

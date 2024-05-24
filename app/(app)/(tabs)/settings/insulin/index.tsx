@@ -1,6 +1,6 @@
 import { ChevronRight } from '@tamagui/lucide-icons';
 import { Link } from 'expo-router';
-import { useObservableState } from 'observable-hooks/src';
+import { useObservableState } from 'observable-hooks';
 import { Button, ListItem, Separator, YGroup } from 'tamagui';
 import { db } from '~/core/db';
 
@@ -12,14 +12,16 @@ export default function InsulinScreen() {
       {insulins.map((meal) => (
         <YGroup.Item key={meal.id}>
           <Link
-            href={{ pathname: '/(tabs)/settings/insulin/[id]', params: { id: meal.id } }}
+            href={{ pathname: '/(app)/(tabs)/settings/insulin/[id]', params: { id: meal.id } }}
             asChild>
             <ListItem hoverTheme pressTheme title={meal.name} iconAfter={ChevronRight} />
           </Link>
         </YGroup.Item>
       ))}
       <YGroup.Item>
-        <Link href={{ pathname: '/(tabs)/settings/insulin/[id]', params: { id: 'new' } }} asChild>
+        <Link
+          href={{ pathname: '/(app)/(tabs)/settings/insulin/[id]', params: { id: 'new' } }}
+          asChild>
           <Button>New Insulin Type</Button>
         </Link>
       </YGroup.Item>

@@ -1,15 +1,19 @@
 import { useLocalSearchParams, useNavigation } from 'expo-router';
-import { defer, filter, iif, map, merge, of, shareReplay } from 'rxjs';
+import { defer, filter, iif, map, merge, of, shareReplay, Subject } from 'rxjs';
 import { Button, Form, Input } from 'tamagui';
 
 import NumericInput from '~/components/input/numericInput';
 import { db } from '~/core/db';
 import { FormLabel, FormRow } from '~/components/input/form';
 import React from 'react';
-import { useObservable, useObservableState } from 'observable-hooks';
+import { useObservable, useObservableState, useSubscription } from 'observable-hooks';
 import { isDefined, unwrapDoc } from '~/core/utils';
 import { Profile } from '~/core/models/profile';
 import { uuidv4 } from '@firebase/util';
+import { confirmDelete } from '~/components/utils';
+
+export const $saveChanges = new Subject<void>();
+export const $remove = new Subject<void>();
 
 const initialProfileForm = () =>
   of<Profile>({
@@ -38,20 +42,21 @@ export default function EditProfileScreen() {
     merge(input$, profileInit$)
   );
 
-  if (!profile) return null;
-
-  const onSubmit = async () => {
+  useSubscription($saveChanges, async () => {
+    if (!profile) return;
     await db.profiles.upsert(profile);
     navigation.goBack();
-  };
-
-  const onRemove = async () => {
+  });
+  useSubscription($remove, async () => {
+    if (!(await confirmDelete())) return;
     const doc = await db.profiles.findOne(id).exec();
     if (doc) {
       await doc.remove();
     }
     navigation.goBack();
-  };
+  });
+
+  if (!profile) return null;
 
   const setName = (name: string) => setProfile({ ...profile, name });
   const setInsulinSensitivity = (insulinSensitivity: number) =>
@@ -96,14 +101,6 @@ export default function EditProfileScreen() {
           }}
         />
       </FormRow>
-      <Form.Trigger asChild>
-        <Button onPress={onSubmit}>Save</Button>
-      </Form.Trigger>
-      <Form.Trigger asChild>
-        <Button backgroundColor={'red'} onPress={onRemove}>
-          Remove
-        </Button>
-      </Form.Trigger>
     </Form>
   );
 }

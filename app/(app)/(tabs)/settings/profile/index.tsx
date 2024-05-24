@@ -1,15 +1,18 @@
 import { ChevronRight } from '@tamagui/lucide-icons';
 import { Link } from 'expo-router';
-import { useObservableState } from 'observable-hooks/src';
+import { useObservableState } from 'observable-hooks';
 import { Button, Card, RadioGroup, Text, View } from 'tamagui';
 import { db } from '~/core/db';
+import { Profile } from '~/core/models/profile';
 
 export default function ProfileScreen() {
   const selectProfile = (id: string) => {
     return db.states.profile_settings.set('selectedProfileId', (_) => id);
   };
-  const [profilesList] = useObservableState(() => db.profiles.find().$, []);
-  const [selectedProfile] = useObservableState(() => db.states.profile_settings.selectedProfileId$);
+  const [profilesList] = useObservableState<Profile[]>(() => db.profiles.find().$, []);
+  const [selectedProfile] = useObservableState<string>(
+    () => db.states.profile_settings.selectedProfileId$
+  );
 
   return (
     <RadioGroup
@@ -18,7 +21,9 @@ export default function ProfileScreen() {
       alignItems="center"
       gap={5}
       marginTop={10}>
-      <Link href={{ pathname: '/(tabs)/settings/profile/[id]', params: { id: 'new' } }} asChild>
+      <Link
+        href={{ pathname: '/(app)/(tabs)/settings/profile/[id]', params: { id: 'new' } }}
+        asChild>
         <Button>
           <Text>New Profile</Text>
         </Button>

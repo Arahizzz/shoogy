@@ -7,7 +7,7 @@ export default function SettingsScreen() {
     <View margin={5}>
       <YGroup alignSelf="center" bordered width={'100%'} size="$5" separator={<Separator />}>
         <YGroup.Item>
-          <Link href={{ pathname: '/(tabs)/settings/profile' }} asChild>
+          <Link href={{ pathname: '/(app)/(tabs)/settings/profile' }} asChild>
             <ListItem
               hoverTheme
               pressTheme
@@ -18,7 +18,7 @@ export default function SettingsScreen() {
           </Link>
         </YGroup.Item>
         <YGroup.Item>
-          <Link href={{ pathname: '/(tabs)/settings/food' }} asChild>
+          <Link href={{ pathname: '/(app)/(tabs)/settings/food' }} asChild>
             <ListItem
               hoverTheme
               pressTheme
@@ -29,7 +29,7 @@ export default function SettingsScreen() {
           </Link>
         </YGroup.Item>
         <YGroup.Item>
-          <Link href={{ pathname: '/(tabs)/settings/insulin' }} asChild>
+          <Link href={{ pathname: '/(app)/(tabs)/settings/insulin' }} asChild>
             <ListItem
               hoverTheme
               pressTheme
