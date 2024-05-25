@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { defer, filter, iif, map, merge, of, shareReplay, Subject } from 'rxjs';
-import { Button, Form, Input } from 'tamagui';
+import { Form, Input, Text } from 'tamagui';
 
 import NumericInput from '~/components/input/numericInput';
 import { db } from '~/core/db';
@@ -11,6 +11,9 @@ import { isDefined, unwrapDoc } from '~/core/utils';
 import { Profile } from '~/core/models/profile';
 import { uuidv4 } from '@firebase/util';
 import { confirmDelete } from '~/components/utils';
+import { insulinTypesSelect$ } from '~/core/calculations/data';
+import { ValueSelect } from '~/components/input/valueSelect';
+import { Info } from '@tamagui/lucide-icons';
 
 export const $saveChanges = new Subject<void>();
 export const $remove = new Subject<void>();
@@ -20,7 +23,7 @@ const initialProfileForm = () =>
     id: uuidv4(),
     name: '',
     insulinSensitivity: 3,
-    carbSensitivity: 3,
+    carbSensitivity: 0.3,
     insulinType: 'Apidra',
   });
 
@@ -28,6 +31,7 @@ export default function EditProfileScreen() {
   const navigation = useNavigation();
   const { id } = useLocalSearchParams<{ id: string }>();
 
+  const insulinTypes$ = useObservable(() => insulinTypesSelect$);
   const profileInit$ = useObservable(() =>
     iif(
       () => id === 'new',
@@ -58,11 +62,14 @@ export default function EditProfileScreen() {
 
   if (!profile) return null;
 
+  const icRatio = profile.insulinSensitivity / profile.carbSensitivity;
+
   const setName = (name: string) => setProfile({ ...profile, name });
   const setInsulinSensitivity = (insulinSensitivity: number) =>
     setProfile({ ...profile, insulinSensitivity });
   const setCarbSensitivity = (carbSensitivity: number) =>
     setProfile({ ...profile, carbSensitivity });
+  const setInsulinType = (insulinType: string) => setProfile({ ...profile, insulinType });
 
   return (
     <Form
@@ -95,10 +102,24 @@ export default function EditProfileScreen() {
           id="carb-sensitivity"
           min={0}
           initialValue={profileInit$.pipe(map((p) => p.carbSensitivity))}
-          step={0.5}
+          step={0.1}
           $changes={{
             next: setCarbSensitivity,
           }}
+        />
+      </FormRow>
+      <FormRow>
+        <Info color={'blueviolet'} />
+        <Text color={'black'} fontWeight={'bold'} fontSize={18}>
+          I:C Ratio = {icRatio}
+        </Text>
+      </FormRow>
+      <FormRow>
+        <FormLabel>Insulin Type</FormLabel>
+        <ValueSelect
+          value$={of(profile.insulinType)}
+          options$={insulinTypes$}
+          onChange={setInsulinType}
         />
       </FormRow>
     </Form>
