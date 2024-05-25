@@ -62,7 +62,7 @@ export default function EditProfileScreen() {
 
   if (!profile) return null;
 
-  const icRatio = profile.insulinSensitivity / profile.carbSensitivity;
+  const icRatio = (profile.insulinSensitivity / profile.carbSensitivity).toFixed(2);
 
   const setName = (name: string) => setProfile({ ...profile, name });
   const setInsulinSensitivity = (insulinSensitivity: number) =>
