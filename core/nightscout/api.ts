@@ -7,7 +7,7 @@ import { db } from '~/core/db';
 import loginManager from '~/core/nightscout/login-manager';
 import { isDefined } from '~/core/utils';
 
-const jwt = from(loginManager.loginStatus).pipe(
+const jwt = from(loginManager.loginStatus$).pipe(
   filter(isDefined),
   switchMap(({ token, url }) =>
     fromFetch(`${url}/v2/authorization/request/${token}`, {

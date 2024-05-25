@@ -1,5 +1,5 @@
 import type { LoginManager, NigtscoutCredentials } from '~/core/nightscout/login-manager';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, ReplaySubject } from 'rxjs';
 
 declare global {
   interface PasswordCredentialInit {
@@ -33,11 +33,11 @@ let loginManager: LoginManager;
 
 if (window.PasswordCredential) {
   class WebLoginManager implements LoginManager {
-    public loginStatus: BehaviorSubject<NigtscoutCredentials | null>;
+    public loginStatus$: ReplaySubject<NigtscoutCredentials | null>;
     constructor() {
-      this.loginStatus = new BehaviorSubject<NigtscoutCredentials | null>(null);
+      this.loginStatus$ = new ReplaySubject<NigtscoutCredentials | null>(1);
       this.getCredentials().then((credentials) => {
-        this.loginStatus.next(credentials);
+        this.loginStatus$.next(credentials);
       });
     }
 
@@ -47,12 +47,12 @@ if (window.PasswordCredential) {
         password: credentials.token,
       });
       await navigator.credentials.store(credential);
-      this.loginStatus.next(credentials);
+      this.loginStatus$.next(credentials);
     }
 
     async logout(): Promise<void> {
       await navigator.credentials.preventSilentAccess();
-      this.loginStatus.next(null);
+      this.loginStatus$.next(null);
     }
 
     private async getCredentials(): Promise<NigtscoutCredentials | null> {
@@ -72,22 +72,22 @@ if (window.PasswordCredential) {
   loginManager = new WebLoginManager();
 } else {
   class LocalStorageLoginManager implements LoginManager {
-    public loginStatus: BehaviorSubject<NigtscoutCredentials | null>;
+    public loginStatus$: ReplaySubject<NigtscoutCredentials | null>;
     constructor() {
-      this.loginStatus = new BehaviorSubject<NigtscoutCredentials | null>(null);
+      this.loginStatus$ = new ReplaySubject<NigtscoutCredentials | null>(1);
       this.getCredentials().then((credentials) => {
-        this.loginStatus.next(credentials);
+        this.loginStatus$.next(credentials);
       });
     }
 
     async login(credentials: NigtscoutCredentials): Promise<void> {
       localStorage.setItem('nightscout-api', JSON.stringify(credentials));
-      this.loginStatus.next(credentials);
+      this.loginStatus$.next(credentials);
     }
 
     async logout(): Promise<void> {
       localStorage.removeItem('nightscout-api');
-      this.loginStatus.next(null);
+      this.loginStatus$.next(null);
     }
 
     private async getCredentials(): Promise<NigtscoutCredentials | null> {
@@ -101,7 +101,5 @@ if (window.PasswordCredential) {
 
   loginManager = new LocalStorageLoginManager();
 }
-
-console.log('loginManager', loginManager);
 
 export default loginManager;

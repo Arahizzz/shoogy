@@ -6,6 +6,8 @@ import { TamaguiProvider } from 'tamagui';
 import config from '../tamagui.config';
 
 import { initDb } from '~/core/db';
+import { firstValueFrom } from 'rxjs';
+import loginManager from '~/core/nightscout/login-manager';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -50,4 +52,5 @@ export default function RootLayout() {
 
 async function initAppAsync() {
   await initDb;
+  await firstValueFrom(loginManager.loginStatus$);
 }
