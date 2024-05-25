@@ -47,11 +47,11 @@ export default function NumericInput(props: Props) {
 
   const currValue = useObservableState(changes$, 0);
   const increment = () => {
-    if (props.max && currValue + props.step > props.max) return;
+    if (props.max !== undefined && currValue + props.step > props.max) return;
     setValue(currValue + props.step);
   };
   const decrement = () => {
-    if (props.min && currValue - props.step < props.min) return;
+    if (props.min !== undefined && currValue - props.step < props.min) return;
     setValue(currValue - props.step);
   };
 
