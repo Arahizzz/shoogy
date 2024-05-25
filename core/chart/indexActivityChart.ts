@@ -5,7 +5,8 @@ import {
   SeriesProps,
 } from '~/core/chart/series';
 import { calculatePredictionPlot } from '~/core/chart/index';
-import { currentActivities$, currentSugarHistory$ } from '~/core/calculations/data';
+import { currentSugarHistory$ } from '~/core/data/sugar';
+import { currentActivities$ } from '~/core/data/activity';
 
 const dataZoom: echarts.DataZoomComponentOption[] = [
   {

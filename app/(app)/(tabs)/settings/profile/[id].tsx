@@ -11,7 +11,7 @@ import { isDefined, unwrapDoc } from '~/core/utils';
 import { Profile } from '~/core/models/profile';
 import { uuidv4 } from '@firebase/util';
 import { confirmDelete } from '~/components/utils';
-import { insulinTypesSelect$ } from '~/core/calculations/data';
+import { insulinTypesSelect$ } from '~/core/data/profile';
 import { ValueSelect } from '~/components/input/valueSelect';
 import { Info } from '@tamagui/lucide-icons';
 

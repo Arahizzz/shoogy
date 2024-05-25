@@ -15,11 +15,12 @@ import { Injection } from '~/core/models/injection';
 import { Meal } from '~/core/models/meal';
 import { getCurrentTick } from '~/core/time';
 import { db } from '~/core/db';
-import { mealTypesSelect$, twelveHoursAgoTick$ } from '~/core/calculations/data';
 import type { MangoQuery, RxDocument } from 'rxdb/src/types';
 import { cancelActivityNotification, scheduleActivityNotification } from '~/core/notifications';
 import { uuidv4 } from '@firebase/util';
 import { ValueSelect } from '~/components/input/valueSelect';
+import { twelveHoursAgoTick$ } from '~/core/data/time';
+import { mealTypesSelect$ } from '~/core/data/profile';
 
 export type ActivityForm = Activity & {
   notify?: boolean;

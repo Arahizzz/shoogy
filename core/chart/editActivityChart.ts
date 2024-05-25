@@ -1,4 +1,4 @@
-import { populateActivity } from '~/core/models/activity';
+import { populateActivities } from '~/core/models/activity';
 import {
   combineLatest,
   combineLatestWith,
@@ -6,21 +6,21 @@ import {
   defaultIfEmpty,
   map,
   Observable,
-  switchMap,
 } from 'rxjs';
 import { editScreenSeries } from '~/core/chart/series';
 import { calculatePredictionPlot } from '~/core/chart/index';
-import { activeProfile$, currentSugarValue$ } from '~/core/calculations/data';
 import { MealCalculation } from '~/core/calculations/meal';
 import { InjectionCalculation } from '~/core/calculations/injection';
 import { ActivityForm } from '~/app/(app)/(tabs)/activities/edit';
+import { activeProfile$ } from '~/core/data/profile';
+import { currentSugarValue$ } from '~/core/data/sugar';
 
 export function editActivityChartPipeline(activites$: Observable<ActivityForm>[]) {
   const calculations$ = combineLatest(activites$).pipe(
     defaultIfEmpty([]),
     debounceTime(300),
     map((activities) => activities.filter((a) => !a.toDelete)),
-    switchMap((activities) => combineLatest(activities.map((a) => populateActivity(a)))),
+    populateActivities(),
     combineLatestWith(activeProfile$),
     map(([activities, profile]) =>
       activities.map((a) =>

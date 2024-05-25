@@ -17,7 +17,8 @@ import {
 } from '@tamagui/lucide-icons';
 import { IconProps } from '@tamagui/helpers-icon';
 import IndexActivityChart from '~/components/chart/index-activity-chart';
-import { currentCob$, currentIob$, currentSugarValue$ } from '~/core/calculations/data';
+import { currentSugarValue$ } from '~/core/data/sugar';
+import { currentCob$, currentIob$ } from '~/core/data/activity';
 
 export default function CombinedScreen() {
   useSubscription(glucoseFetchWorker);

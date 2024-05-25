@@ -2,7 +2,15 @@ import { Meal, MealType, PopulatedMeal } from '~/core/models/meal';
 import { Injection, InsulinType, PopulatedInjection } from '~/core/models/injection';
 import { db } from '~/core/db';
 import { unwrapDoc } from '~/core/utils';
-import { map, Observable } from 'rxjs';
+import {
+  combineLatest,
+  defaultIfEmpty,
+  map,
+  Observable,
+  OperatorFunction,
+  pipe,
+  switchMap,
+} from 'rxjs';
 import { throwIfNull } from '~/core/rxjs';
 
 export type Activity = Meal | Injection;
@@ -33,4 +41,26 @@ export function populateInjection(injection: Injection): Observable<PopulatedInj
 
 export function populateActivity(activity: Activity): Observable<PopulatedActivity> {
   return activity.type === 'meal' ? populateMeal(activity) : populateInjection(activity);
+}
+
+export function populateMeals(): OperatorFunction<Meal[], PopulatedMeal[]> {
+  return pipe(
+    switchMap((meals) => combineLatest(meals.map((m) => populateMeal(m))).pipe(defaultIfEmpty([])))
+  );
+}
+
+export function populateInjections(): OperatorFunction<Injection[], PopulatedInjection[]> {
+  return pipe(
+    switchMap((injections) =>
+      combineLatest(injections.map((i) => populateInjection(i))).pipe(defaultIfEmpty([]))
+    )
+  );
+}
+
+export function populateActivities(): OperatorFunction<Activity[], PopulatedActivity[]> {
+  return pipe(
+    switchMap((activities) =>
+      combineLatest(activities.map((a) => populateActivity(a))).pipe(defaultIfEmpty([]))
+    )
+  );
 }
