@@ -69,7 +69,7 @@ export function calculatePredictionPlot(
 
   const startTick = startSugar.tick;
   const endTick =
-    Math.max(...activities.map((activity) => activity.startTick + activity.durationTicks)) + 6;
+    Math.max(...activities.map((activity) => activity.startTick + activity.durationTicks)) + 3;
   const xs = new Float64Array(endTick - startTick).map((_, i) => incrementTick(startTick, i));
   const activityPlot = getCombinedSugarPlot(xs, activities, startSugar.sugar);
   const markLineData = getChartMarkers(activities);

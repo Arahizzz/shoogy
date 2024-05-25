@@ -2,10 +2,10 @@ import { Pizza, Syringe, Trash2 } from '@tamagui/lucide-icons';
 import { router } from 'expo-router';
 import { useObservable, useObservablePickState } from 'observable-hooks';
 import { useObservableState } from 'observable-hooks/src';
-import React, { useEffect } from 'react';
-import { ColorValue } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { ColorValue, FlatList } from 'react-native';
 import { BehaviorSubject, distinctUntilChanged, firstValueFrom, map, of } from 'rxjs';
-import { Button, ScrollView, Stack, styled, XStack, YStack } from 'tamagui';
+import { Button, Stack, styled, View, XStack, YStack } from 'tamagui';
 
 import EditActivityChart from '~/components/chart/edit-activity-chart';
 import NumericInput from '~/components/input/numericInput';
@@ -116,62 +116,71 @@ export default function EditActivityScreen() {
   }, []);
 
   return (
-    <ScrollView stickyHeaderIndices={[0]}>
-      <YStack backgroundColor="whitesmoke" alignItems="center">
-        <EditActivityChart activities$={store.activitiesState$} />
-        <XStack justifyContent="center" gap={10}>
-          <Button
-            icon={<Pizza />}
-            variant="outlined"
-            backgroundColor="$orange10Light"
-            width={150}
-            onPress={() =>
-              store.newActivity({
-                type: 'meal',
-                carbsCount: 30,
-                mealType: 'medium-gi',
-                startTick: getCurrentTick(),
-              })
-            }>
-            Meal
-          </Button>
-          <Button
-            icon={<Syringe />}
-            variant="outlined"
-            backgroundColor="$blue10Light"
-            width={150}
-            onPress={() =>
-              store.newActivity({
-                type: 'insulin',
-                insulinType: 'Apidra',
-                insulinAmount: 4,
-                startTick: getCurrentTick(),
-              })
-            }>
-            Injection
-          </Button>
-        </XStack>
-        <ActivitiesEdit />
-      </YStack>
-    </ScrollView>
+    <YStack backgroundColor="whitesmoke" alignItems="stretch" flex={1}>
+      <EditActivityChart activities$={store.activitiesState$} />
+      <XStack justifyContent="center" marginTop={-40} marginBottom={5} gap={10}>
+        <Button
+          icon={<Pizza />}
+          variant="outlined"
+          backgroundColor="$orange10Light"
+          width={150}
+          onPress={() =>
+            store.newActivity({
+              type: 'meal',
+              carbsCount: 30,
+              mealType: 'medium-gi',
+              startTick: getCurrentTick(),
+            })
+          }>
+          Meal
+        </Button>
+        <Button
+          icon={<Syringe />}
+          variant="outlined"
+          backgroundColor="$blue10Light"
+          width={150}
+          onPress={() =>
+            store.newActivity({
+              type: 'insulin',
+              insulinType: 'Apidra',
+              insulinAmount: 4,
+              startTick: getCurrentTick(),
+            })
+          }>
+          Injection
+        </Button>
+      </XStack>
+      <ActivitiesEdit />
+    </YStack>
   );
 }
 
 function ActivitiesEdit() {
+  const ref = useRef<FlatList>(null);
   const activities = useObservableState(store.activitiesState$, []);
 
+  useEffect(() => {
+    setTimeout(() => {
+      if (ref.current) ref.current.scrollToEnd({ animated: true });
+    }, 500);
+  }, [ref.current, activities]);
+
   return (
-    <YStack
-      alignItems="stretch"
-      alignSelf="center"
-      marginTop={10}
-      marginHorizontal={15}
-      maxWidth={600}
-      width="90%">
-      {activities.map((activity$) => (
-        <ActivityEdit key={activity$.value.id.toString()} activity$={activity$} />
-      ))}
-    </YStack>
+    <FlatList
+      ref={ref}
+      contentContainerStyle={{
+        paddingTop: 10,
+        paddingHorizontal: 10,
+        flexGrow: 1,
+        maxWidth: 600,
+        width: '100%',
+        alignSelf: 'center',
+      }}
+      ListFooterComponent={<View height={250} />}
+      data={activities}
+      keyExtractor={(item) => item.value.id}
+      renderItem={({ item }) => <ActivityEdit key={item.value.id} activity$={item} />}
+    />
   );
 }
 
@@ -333,7 +342,7 @@ function InsulinEdit({ insulin$ }: { insulin$: BehaviorSubject<Injection> }) {
 const ActivityEditCard = styled(Stack, {
   flexDirection: 'row',
   justifyContent: 'space-between',
-  alignSelf: 'stretch',
+  flex: 1,
   padding: 10,
   borderRadius: 7,
   marginVertical: 5,
