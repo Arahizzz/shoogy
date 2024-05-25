@@ -65,14 +65,13 @@ export class MealCalculation implements Calculation, SugarInfluence {
   getActivityDelta(fromTick: number, toTick: number): number {
     if (fromTick < this.startTick) fromTick = this.startTick;
     if (toTick > this.startTick + this.durationTicks) toTick = this.startTick + this.durationTicks;
-    return integrate(this.activityCurve, fromTick, toTick, 0.1);
+    return (
+      (this.mealType.digestedPercentage / 100) *
+      integrate(this.activityCurve, fromTick, toTick, 0.1)
+    );
   }
   getSugarDelta(fromTick: number, toTick: number): number {
-    return (
-      (this.profile.carbSensitivity / 10) *
-      (this.mealType.digestedPercentage / 100) *
-      this.getActivityDelta(fromTick, toTick)
-    );
+    return this.profile.carbSensitivity * this.getActivityDelta(fromTick, toTick);
   }
 
   public getActivityPlot(xs: Axis) {

@@ -44,6 +44,6 @@ export const defaultProfile: Profile = {
   id: 'default',
   name: 'Default',
   insulinSensitivity: 3,
-  carbSensitivity: 3,
+  carbSensitivity: 0.3,
   insulinType: 'Apidra',
 };
