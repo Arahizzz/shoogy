@@ -44,6 +44,7 @@
             libcxx
             libcxxabi
 
+            google-chrome
             git
             gitRepo
             gnupg
