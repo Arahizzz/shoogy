@@ -36,12 +36,14 @@ export type Database = RxDatabase<
 
 export let db: Database = undefined!;
 
-const seedData = async () => {
-  await db.insulin_types.upsert(Apidra);
-  await db.meal_types.bulkUpsert(mealTypes);
-  await db.profiles.upsert(defaultProfile);
+const seedData = async (force = false) => {
+  if (force || (await db.profiles.count().exec()) === 0) {
+    await db.insulin_types.upsert(Apidra);
+    await db.meal_types.bulkUpsert(mealTypes);
+    await db.profiles.upsert(defaultProfile);
 
-  await db.states.profile_settings.set('selectedProfileId', (_) => defaultProfile.id);
+    await db.states.profile_settings.set('selectedProfileId', (_) => defaultProfile.id);
+  }
 };
 
 export const initDb = (async () => {
