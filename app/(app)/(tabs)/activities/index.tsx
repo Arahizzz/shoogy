@@ -82,7 +82,7 @@ function GlucoseDirection({ direction }: { direction: Direction }) {
 function IobInfo() {
   const [iob] = useObservableState(() => currentIob$, undefined);
 
-  if (!iob) return <></>;
+  if (!iob || iob <= 0) return <></>;
 
   return (
     <YStack>
@@ -94,7 +94,7 @@ function IobInfo() {
 function CobInfo() {
   const [cob] = useObservableState(() => currentCob$, undefined);
 
-  if (!cob) return <></>;
+  if (!cob || cob <= 0) return <></>;
 
   return (
     <YStack>
