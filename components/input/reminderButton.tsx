@@ -1,9 +1,10 @@
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, firstValueFrom } from 'rxjs';
 import { useObservableState } from 'observable-hooks';
 import { Bell, BellOff } from '@tamagui/lucide-icons';
 import { Button } from 'tamagui';
 import React from 'react';
-import { ActivityForm } from '~/app/(tabs)/activities/edit';
+import { ActivityForm } from '~/app/(app)/(tabs)/activities/edit';
+import { notificationPermissionState$ } from '~/core/notifications';
 
 export type ReminderButtonProps = {
   activity$: BehaviorSubject<ActivityForm>;
@@ -13,8 +14,12 @@ export type ReminderButtonProps = {
 export function ReminderButton({ activity$, color }: ReminderButtonProps) {
   const activity = useObservableState(activity$, activity$.value);
 
-  const toggleReminder = () => {
-    activity$.next({ ...activity, notificationId: undefined, notify: !activity.notify });
+  const toggleReminder = async () => {
+    if (!activity.notify && (await firstValueFrom(notificationPermissionState$))) {
+      activity$.next({ ...activity, notificationId: undefined, notify: true });
+    } else {
+      activity$.next({ ...activity, notify: false });
+    }
   };
 
   return (

@@ -21,6 +21,7 @@ import { uuidv4 } from '@firebase/util';
 import { ValueSelect } from '~/components/input/valueSelect';
 import { twelveHoursAgoTick$ } from '~/core/data/time';
 import { mealTypesSelect$ } from '~/core/data/profile';
+import { ReminderButton } from '~/components/input/reminderButton';
 
 export type ActivityForm = Activity & {
   notify?: boolean;
@@ -95,7 +96,10 @@ class ActivityStore {
     }
 
     if (activity.notify && !activity.notificationId) {
-      activity.notificationId = await scheduleActivityNotification(activity);
+      const currentTick = getCurrentTick();
+      if (activity.startTick > currentTick) {
+        activity.notificationId = await scheduleActivityNotification(activity);
+      }
     }
 
     activity.notify = undefined;
@@ -259,6 +263,7 @@ function MealEdit({ meal$ }: { meal$: BehaviorSubject<Meal> }) {
       <PizzaIcon />
       <XStack justifyContent="space-between">
         <DeleteButton activity$={meal$ as BehaviorSubject<ActivityForm>} color={color} />
+        <ReminderButton activity$={meal$ as BehaviorSubject<ActivityForm>} color={color} />
         <ActivityTimeEdit
           color={color}
           fontColor={fontColor}
@@ -312,6 +317,7 @@ function InsulinEdit({ insulin$ }: { insulin$: BehaviorSubject<Injection> }) {
       <SyringeIcon />
       <XStack>
         <DeleteButton activity$={insulin$ as BehaviorSubject<ActivityForm>} color={color} />
+        <ReminderButton activity$={insulin$ as BehaviorSubject<ActivityForm>} color={color} />
         <ActivityTimeEdit
           color={color}
           fontColor={fontColor}

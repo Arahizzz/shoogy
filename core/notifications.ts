@@ -4,32 +4,30 @@ import notifee, {
   TimestampTrigger,
   TriggerType,
 } from '@notifee/react-native';
-import { Platform } from 'react-native';
 import { defer, map, shareReplay } from 'rxjs';
 import { Activity } from '~/core/models/activity';
 import { tickToTime } from '~/core/time';
+import { format } from 'date-fns';
 
 async function ensureNotificationPermissions() {
-  if (Platform.OS === 'ios') {
-    // IOS
-    await notifee.requestPermission({
-      alert: true,
-      criticalAlert: true,
-      sound: true,
-      badge: false,
-    });
-  } else if (Platform.OS === 'android') {
-    // Android
-    await notifee.createChannel({
-      id: 'default',
-      name: 'Default Channel',
-      badge: false,
-      sound: 'default',
-      bypassDnd: true,
-      importance: AndroidImportance.HIGH,
-      visibility: AndroidVisibility.PUBLIC,
-    });
-  }
+  // IOS
+  await notifee.requestPermission({
+    alert: true,
+    criticalAlert: true,
+    sound: true,
+    badge: false,
+  });
+
+  // Android
+  await notifee.createChannel({
+    id: 'default',
+    name: 'Default Channel',
+    badge: false,
+    sound: 'default',
+    bypassDnd: true,
+    importance: AndroidImportance.HIGH,
+    visibility: AndroidVisibility.PUBLIC,
+  });
 }
 
 export const notificationPermissionState$ = defer(() => ensureNotificationPermissions()).pipe(
@@ -49,8 +47,8 @@ export async function scheduleActivityNotification(activity: Activity) {
       title: activity.type === 'meal' ? 'Time to eat!' : 'Time for injection!',
       body:
         activity.type === 'meal'
-          ? `Eat ${activity.carbsCount}g at ${tickToTime(activity.startTick).toLocaleString()}`
-          : `Inject ${activity.insulinAmount}U at ${tickToTime(activity.startTick).toLocaleString()}`,
+          ? `Eat ${activity.carbsCount}g at ${format(tickToTime(activity.startTick), 'HH:mm')}`
+          : `Inject ${activity.insulinAmount}U at ${format(tickToTime(activity.startTick), 'HH:mm')}`,
       android: {
         channelId: 'default',
       },
