@@ -82,9 +82,6 @@ export default function NumericInput(props: Props) {
 
 const heightConfig = {
   height: 40,
-  $xs: {
-    height: 30,
-  },
 } as const;
 
 export const StepperWrapper = styled(XGroup, {
@@ -95,9 +92,6 @@ export const StepperWrapper = styled(XGroup, {
 export const Stepper = styled(Button, {
   height: heightConfig.height,
   paddingHorizontal: 10,
-  $xs: {
-    height: heightConfig.$xs.height,
-  },
 });
 
 export const SmallNumericInput = styled(Input, {
@@ -112,9 +106,8 @@ export const SmallNumericInput = styled(Input, {
   flex: 1,
   fontSize: 15,
   fontWeight: '500',
-  $xs: {
+  $sm: {
     fontSize: 11,
-    height: heightConfig.$xs.height,
   },
 });
 
@@ -133,9 +126,8 @@ export const Suffix = styled(Text, {
   textAlign: 'right',
   fontSize: 14,
   fontWeight: '500',
-  $xs: {
+  $sm: {
     fontSize: 11,
-    height: heightConfig.$xs.height,
     lineHeight: 26,
   },
 });
