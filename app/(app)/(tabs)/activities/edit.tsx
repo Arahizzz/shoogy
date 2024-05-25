@@ -1,22 +1,11 @@
-import { ChevronDown, Pizza, Syringe, Trash2 } from '@tamagui/lucide-icons';
+import { Pizza, Syringe, Trash2 } from '@tamagui/lucide-icons';
 import { router } from 'expo-router';
-import { useObservablePickState } from 'observable-hooks';
+import { useObservable, useObservablePickState } from 'observable-hooks';
 import { useObservableState } from 'observable-hooks/src';
 import React, { useEffect } from 'react';
 import { ColorValue } from 'react-native';
-import { BehaviorSubject, firstValueFrom, map, of } from 'rxjs';
-import {
-  Adapt,
-  Button,
-  ScrollView,
-  Select,
-  Sheet,
-  Stack,
-  styled,
-  Text,
-  XStack,
-  YStack,
-} from 'tamagui';
+import { BehaviorSubject, distinctUntilChanged, firstValueFrom, map, of } from 'rxjs';
+import { Button, ScrollView, Stack, styled, XStack, YStack } from 'tamagui';
 
 import EditActivityChart from '~/components/chart/edit-activity-chart';
 import NumericInput from '~/components/input/numericInput';
@@ -26,10 +15,11 @@ import { Injection } from '~/core/models/injection';
 import { Meal } from '~/core/models/meal';
 import { getCurrentTick } from '~/core/time';
 import { db } from '~/core/db';
-import { twelveHoursAgoTick$ } from '~/core/calculations/data';
+import { mealTypesSelect$, twelveHoursAgoTick$ } from '~/core/calculations/data';
 import type { MangoQuery, RxDocument } from 'rxdb/src/types';
 import { cancelActivityNotification, scheduleActivityNotification } from '~/core/notifications';
 import { uuidv4 } from '@firebase/util';
+import { ValueSelect } from '~/components/input/valueSelect';
 
 export type ActivityForm = Activity & {
   notify?: boolean;
@@ -288,56 +278,19 @@ function MealEdit({ meal$ }: { meal$: BehaviorSubject<Meal> }) {
 }
 
 function MealTypeEdit({ meal$ }: { meal$: BehaviorSubject<Meal> }) {
-  const [mealTypes] = useObservableState(() => db.meal_types.find().$, []);
-  const { mealType } = useObservablePickState(meal$, meal$.value, 'mealType');
+  const mealType$ = useObservable(() =>
+    meal$.pipe(
+      map((meal) => meal.mealType),
+      distinctUntilChanged()
+    )
+  );
+  const mealOptions$ = useObservable(() => mealTypesSelect$);
   const changeType = (mealType: string) => {
     const prevMeal = meal$.value;
     meal$.next({ ...prevMeal, mealType });
   };
 
-  return (
-    <Select value={mealType} onValueChange={changeType}>
-      <Select.Trigger
-        height={40}
-        width={150}
-        fontSize={8}
-        paddingVertical={0}
-        // backgroundColor="whitesmoke"
-        color="black"
-        iconAfter={<ChevronDown color="black" />}>
-        <Select.Value placeholder="Meal Type" />
-      </Select.Trigger>
-      <Adapt platform="touch">
-        <Sheet
-          native
-          modal
-          dismissOnSnapToBottom
-          animationConfig={{
-            type: 'spring',
-            damping: 20,
-            mass: 1.2,
-            stiffness: 250,
-          }}>
-          <Sheet.Frame>
-            <Sheet.ScrollView>
-              <Adapt.Contents />
-            </Sheet.ScrollView>
-          </Sheet.Frame>
-          <Sheet.Overlay animation="lazy" enterStyle={{ opacity: 0 }} exitStyle={{ opacity: 0 }} />
-        </Sheet>
-      </Adapt>
-
-      <Select.Content>
-        <Select.Viewport>
-          {mealTypes.map((mealType, i) => (
-            <Select.Item key={mealType.id} value={mealType.id} index={i}>
-              <Select.ItemText>{mealType.name}</Select.ItemText>
-            </Select.Item>
-          ))}
-        </Select.Viewport>
-      </Select.Content>
-    </Select>
-  );
+  return <ValueSelect value$={mealType$} options$={mealOptions$} onChange={changeType} />;
 }
 
 function InsulinEdit({ insulin$ }: { insulin$: BehaviorSubject<Injection> }) {
