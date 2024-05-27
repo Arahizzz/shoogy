@@ -1,10 +1,11 @@
 import { useObservableCallback } from 'observable-hooks';
 import { useObservableState } from 'observable-hooks/src';
-import { ColorValue } from 'react-native';
+import { ColorValue, Platform } from 'react-native';
 import { first, merge, Observable, PartialObserver } from 'rxjs';
 import { Button, Input, styled, Text, XGroup } from 'tamagui';
 
 import { useObservableInput, validationError } from '~/components/input/observableInput';
+import { mergeProps } from '@tamagui/web';
 
 export type ValidationState = Record<string, string>;
 
@@ -80,54 +81,58 @@ export default function NumericInput(props: Props) {
   );
 }
 
-const heightConfig = {
+const sizeConfig = {
   height: 40,
+  $sm: {
+    height: 33,
+    fontSize: 11,
+    lineHeight: Platform.OS === 'android' ? 22 : undefined,
+  },
 } as const;
 
 export const StepperWrapper = styled(XGroup, {
-  width: 125,
+  width: 140,
   marginHorizontal: 5,
 });
 
-export const Stepper = styled(Button, {
-  height: heightConfig.height,
-  paddingHorizontal: 10,
-});
+export const Stepper = styled(
+  Button,
+  mergeProps(sizeConfig, {
+    paddingHorizontal: 10,
+  })
+);
 
-export const SmallNumericInput = styled(Input, {
-  height: heightConfig.height,
-  backgroundColor: 'whitesmoke',
-  color: 'black',
-  borderLeftWidth: 0,
-  borderRightWidth: 0,
-  paddingHorizontal: 0,
-  textAlign: 'center',
-  width: 0,
-  flex: 1,
-  fontSize: 15,
-  fontWeight: '500',
-  $sm: {
-    fontSize: 11,
-  },
-});
+export const SmallNumericInput = styled(
+  Input,
+  mergeProps(sizeConfig, {
+    backgroundColor: 'whitesmoke',
+    color: 'black',
+    borderLeftWidth: 0,
+    borderRightWidth: 0,
+    paddingHorizontal: 0,
+    textAlign: 'center',
+    width: 0,
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '500',
+  })
+);
 
-export const Suffix = styled(Text, {
-  height: heightConfig.height,
-  backgroundColor: 'whitesmoke',
-  color: 'black',
-  borderLeftWidth: 0,
-  borderRightWidth: 0,
-  borderTopWidth: 1,
-  borderBottomWidth: 1,
-  paddingLeft: 5,
-  paddingRight: 3,
-  paddingVertical: 0,
-  lineHeight: 33,
-  textAlign: 'right',
-  fontSize: 14,
-  fontWeight: '500',
-  $sm: {
-    fontSize: 11,
-    lineHeight: 26,
-  },
-});
+export const Suffix = styled(
+  Text,
+  mergeProps(sizeConfig, {
+    backgroundColor: 'whitesmoke',
+    color: 'black',
+    borderLeftWidth: 0,
+    borderRightWidth: 0,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    paddingLeft: 5,
+    paddingRight: 3,
+    paddingVertical: 0,
+    lineHeight: 33,
+    textAlign: 'right',
+    fontSize: 14,
+    fontWeight: '500',
+  })
+);

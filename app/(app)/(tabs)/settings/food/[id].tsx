@@ -1,14 +1,14 @@
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { defer, filter, iif, map, merge, of, shareReplay, Subject } from 'rxjs';
-import { Form, Input } from 'tamagui';
+import { Form } from 'tamagui';
 
-import NumericInput from '../../../../../components/input/numericInput';
-import { isDefined, unwrapDoc } from '../../../../../core/utils';
+import NumericInput from '~/components/input/numericInput';
+import { isDefined, unwrapDoc } from '~/core/utils';
 import { useObservable, useObservableState, useSubscription } from 'observable-hooks';
 import { MealType } from '~/core/models/meal';
 import { db } from '~/core/db';
 import { uuidv4 } from '@firebase/util';
-import { FormLabel, FormRow } from '~/components/input/form';
+import { FormInput, FormLabel, FormRow } from '~/components/input/form';
 import { confirmDelete } from '~/components/utils';
 
 type QueryParams = {
@@ -73,7 +73,7 @@ export default function EditFoodScreen() {
       gap="$2">
       <FormRow>
         <FormLabel>Name</FormLabel>
-        <Input value={meal.name} onChangeText={setName} />
+        <FormInput value={meal.name} onChangeText={setName} />
       </FormRow>
       <FormRow>
         <FormLabel>Digested Percentage</FormLabel>
@@ -82,18 +82,20 @@ export default function EditFoodScreen() {
           min={0}
           initialValue={mealInit$.pipe(map((m) => m.digestedPercentage))}
           step={1}
+          suffix={'%'}
           $changes={{
             next: setDigestedPercentage,
           }}
         />
       </FormRow>
       <FormRow>
-        <FormLabel>Carbs Absorption Rate</FormLabel>
+        <FormLabel>Absorption Rate</FormLabel>
         <NumericInput
-          id="carbs-absorption-rate-per-hr"
+          id="absorption-rate-per-hr"
           min={0}
           initialValue={mealInit$.pipe(map((m) => m.carbsAbsorptionRatePerHr))}
           step={1}
+          suffix={'g/hr'}
           $changes={{
             next: setCarbsAbsorptionRatePerHr,
           }}

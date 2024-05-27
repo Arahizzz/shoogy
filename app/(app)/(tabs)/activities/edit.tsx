@@ -4,7 +4,7 @@ import { useObservable, useObservablePickState } from 'observable-hooks';
 import { useObservableState } from 'observable-hooks/src';
 import React, { useEffect, useRef } from 'react';
 import { ColorValue, FlatList } from 'react-native';
-import { BehaviorSubject, distinctUntilChanged, firstValueFrom, map, of } from 'rxjs';
+import { BehaviorSubject, distinctUntilChanged, map, of } from 'rxjs';
 import { Button, Stack, styled, View, XStack, YStack } from 'tamagui';
 
 import EditActivityChart from '~/components/chart/edit-activity-chart';
@@ -19,7 +19,6 @@ import type { MangoQuery, RxDocument } from 'rxdb/src/types';
 import { cancelActivityNotification, scheduleActivityNotification } from '~/core/notifications';
 import { uuidv4 } from '@firebase/util';
 import { ValueSelect } from '~/components/input/valueSelect';
-import { twelveHoursAgoTick$ } from '~/core/data/time';
 import { mealTypesSelect$ } from '~/core/data/profile';
 import { ReminderButton } from '~/components/input/reminderButton';
 
@@ -32,10 +31,10 @@ class ActivityStore {
   public activitiesState$ = new BehaviorSubject<BehaviorSubject<ActivityForm>[]>([]);
 
   async init() {
-    const twelveHoursAgoTick = await firstValueFrom(twelveHoursAgoTick$);
+    const fourHoursAgoTick = getCurrentTick() - 4 * 12;
     const query: MangoQuery<{ startTick: number }> = {
       selector: {
-        startTick: { $gte: twelveHoursAgoTick },
+        startTick: { $gte: fourHoursAgoTick },
       },
     };
     const meals = await db.meals.find(query).exec();
@@ -262,8 +261,10 @@ function MealEdit({ meal$ }: { meal$: BehaviorSubject<Meal> }) {
       }}>
       <PizzaIcon />
       <XStack justifyContent="space-between">
-        <DeleteButton activity$={meal$ as BehaviorSubject<ActivityForm>} color={color} />
-        <ReminderButton activity$={meal$ as BehaviorSubject<ActivityForm>} color={color} />
+        <XStack>
+          <DeleteButton activity$={meal$ as BehaviorSubject<ActivityForm>} color={color} />
+          <ReminderButton activity$={meal$ as BehaviorSubject<ActivityForm>} color={color} />
+        </XStack>
         <ActivityTimeEdit
           color={color}
           fontColor={fontColor}
@@ -313,18 +314,26 @@ function InsulinEdit({ insulin$ }: { insulin$: BehaviorSubject<Injection> }) {
   const fontColor = '$blue8Dark';
 
   return (
-    <ActivityEditCard backgroundColor="rgba(0, 106, 220, 0.25)">
+    <ActivityEditCard
+      backgroundColor="rgba(0, 106, 220, 0.25)"
+      $xs={{
+        flexDirection: 'column',
+        alignItems: 'stretch',
+        gap: 5,
+      }}>
       <SyringeIcon />
-      <XStack>
-        <DeleteButton activity$={insulin$ as BehaviorSubject<ActivityForm>} color={color} />
-        <ReminderButton activity$={insulin$ as BehaviorSubject<ActivityForm>} color={color} />
+      <XStack justifyContent="space-between">
+        <XStack>
+          <DeleteButton activity$={insulin$ as BehaviorSubject<ActivityForm>} color={color} />
+          <ReminderButton activity$={insulin$ as BehaviorSubject<ActivityForm>} color={color} />
+        </XStack>
         <ActivityTimeEdit
           color={color}
           fontColor={fontColor}
           activity$={insulin$ as BehaviorSubject<Activity>}
         />
       </XStack>
-      <XStack>
+      <XStack $xs={{ justifyContent: 'flex-end' }}>
         <NumericInput
           color={color}
           fontColor={fontColor}

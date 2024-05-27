@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { defer, filter, iif, map, merge, of, shareReplay, Subject } from 'rxjs';
-import { Button, Form, Input, XStack, YStack } from 'tamagui';
+import { Button, Form, XStack, YStack } from 'tamagui';
 
 import NumericInput from '~/components/input/numericInput';
 import { isDefined, unwrapDoc } from '~/core/utils';
@@ -10,7 +10,7 @@ import { Plus, Trash2 } from '@tamagui/lucide-icons';
 import React from 'react';
 import { db } from '~/core/db';
 import { uuidv4 } from '@firebase/util';
-import { FormLabel, FormRow } from '~/components/input/form';
+import { FormInput, FormLabel, FormRow } from '~/components/input/form';
 import { confirmDelete } from '~/components/utils';
 
 type QueryParams = {
@@ -115,20 +115,20 @@ export default function EditInsulinScreen() {
         gap="$2">
         <FormRow>
           <FormLabel>Name</FormLabel>
-          <Input value={insulin.name} onChangeText={setName} />
+          <FormInput value={insulin.name} onChangeText={setName} />
         </FormRow>
-        <XStack>
+        <XStack justifyContent={'space-between'} alignItems={'center'}>
           <FormLabel>Points:</FormLabel>
           <Button
-            variant="outlined"
             borderColor={undefined}
-            height={20}
+            height={40}
             onPress={() => addPoint()}
-            icon={<Plus color={'black'} size="$1" />}
-          />
+            icon={<Plus size="$1" />}>
+            Add Point
+          </Button>
         </XStack>
         {insulin.points.map((p, i) => (
-          <FormRow key={i}>
+          <FormRow gap={0} key={i}>
             <NumericInput
               id={`tick-${i}`}
               initialValue={of(p.tick)}

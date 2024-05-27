@@ -1,10 +1,10 @@
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { defer, filter, iif, map, merge, of, shareReplay, Subject } from 'rxjs';
-import { Form, Input, Text } from 'tamagui';
+import { Form, Text } from 'tamagui';
 
 import NumericInput from '~/components/input/numericInput';
 import { db } from '~/core/db';
-import { FormLabel, FormRow } from '~/components/input/form';
+import { FormInput, FormLabel, FormRow } from '~/components/input/form';
 import React from 'react';
 import { useObservable, useObservableState, useSubscription } from 'observable-hooks';
 import { isDefined, unwrapDoc } from '~/core/utils';
@@ -82,7 +82,7 @@ export default function EditProfileScreen() {
       gap="$2">
       <FormRow>
         <FormLabel>Name</FormLabel>
-        <Input value={profile.name} onChangeText={setName} />
+        <FormInput value={profile.name} onChangeText={setName} />
       </FormRow>
       <FormRow>
         <FormLabel>Insulin Sensitivity</FormLabel>
