@@ -55,21 +55,23 @@ export function getChartMarkers(
   });
 }
 
+const emptyPlot = {
+  xs: [],
+  ys: [],
+  markLineData: [],
+};
+
 export function calculatePredictionPlot(
   activities: ActivityFunction[],
   startSugar: GlucoseEntry
 ): SeriesProps {
-  if (activities.length === 0) {
-    return {
-      xs: [],
-      ys: [],
-      markLineData: [],
-    };
-  }
+  if (activities.length === 0) return emptyPlot;
 
   const startTick = startSugar.tick;
   const endTick =
     Math.max(...activities.map((activity) => activity.startTick + activity.durationTicks)) + 3;
+  if (endTick <= startTick) return emptyPlot;
+
   const xs = new Float64Array(endTick - startTick).map((_, i) => incrementTick(startTick, i));
   const activityPlot = getCombinedSugarPlot(xs, activities, startSugar.sugar);
   const markLineData = getChartMarkers(activities);
